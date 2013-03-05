@@ -1,11 +1,10 @@
 .libPaths("/home/andeek/R/library")
-source("code/GraphMLtoJSON.R")
 
 data_sets <- c("data/football.gml", "data/karate.gml")
 layouts <- c("force")
 
 shinyServer(function(input, output) {
-  
+  source("code/GraphMLtoJSON.R")
   # Drop-down selection box for which data set
   output$choose_dataset <- reactiveUI(function() {
     selectInput("dataset", "Data set", as.list(data_sets))

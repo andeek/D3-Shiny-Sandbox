@@ -1,9 +1,10 @@
 GraphMLtoJSON<-function(file){
   require(XML)
   require(rjson)
+  require(plyr)
   
   graph<-xmlRoot(xmlTreeParse(file))[["graph"]]
-    
+  
   nodes<-xmlElementsByTagName(graph, "node")
   edges<-xmlElementsByTagName(graph, "edge")
   
@@ -17,25 +18,16 @@ GraphMLtoJSON<-function(file){
     }
     node_list[[i]]<-cbind(id, data.frame(data_list))
   }
-
+  
   edge_list <- lapply(1:length(edges),function(i) c(source=xmlGetAttr(edges[[i]],"source"), target=xmlGetAttr(edges[[i]],"target")))
-  
-  for(e in 1:length(edge_list)) {
-    for(n in 1:length(node_list)) {
-      if(edge_list[[e]]["source"] == node_list[[n]]["id"]) 
-        edge_list[[e]]["source"] <- as.numeric(n-1)
-      if(edge_list[[e]]["target"] == node_list[[n]]["id"])
-        edge_list[[e]]["target"] <- as.numeric(n-1)
-    }
-  }
-  
-  test.n<-ldply(node_list)
-  test.e<-ldply(edge_list)
-  e.2<-data.frame(source=apply(test.e, 1, function(x) which(test.n$id == x["source"])-1),
-                  target=apply(test.e, 1, function(x) which(test.n$id == x["target"])-1))
+
+  temp.n<-ldply(node_list)
+  temp.e<-ldply(edge_list)
+  e.2<-data.frame(source=apply(temp.e, 1, function(x) which(temp.n$id == x["source"])-1),
+                  target=apply(temp.e, 1, function(x) which(temp.n$id == x["target"])-1))
   
   edge_list.2<-split(e.2, 1:nrow(e.2))
-  
+  names(edge_list.2)<-NULL
   
   merge_lists<-list()
   merge_lists$nodes<-node_list

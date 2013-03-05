@@ -26,7 +26,7 @@ var outputBinding = new Shiny.OutputBinding();
     find: function(scope) {
       return $(scope).find('.shiny-graph-output');
     },
-    renderValue: function(el, data) {		
+    renderValue: function(el, data) {  	
 		//remove the old graph
 		var svg = d3.select(el).select("svg");      
 		svg.remove();
@@ -53,7 +53,6 @@ var outputBinding = new Shiny.OutputBinding();
     var node, link;
 
     drawGraph(dataset, layout)
-    
     function drawGraph(ds, l) {        
       switch(l)
       {
@@ -66,7 +65,7 @@ var outputBinding = new Shiny.OutputBinding();
     }  
     
     function forceLayout(ds) {
-
+      
       var force = d3.layout.force()
         .charge(-120)
         .linkDistance(30)
@@ -76,13 +75,16 @@ var outputBinding = new Shiny.OutputBinding();
         .nodes(ds.nodes)
         .links(ds.edges)
         .start();
-    
+
       link = svg.append("g")
         .attr("class", "link")
         .selectAll("line.link")        
         .data(ds.edges).enter()
         .append("line")
         .attr("class", "link");
+      console.log(ds.edges);
+      console.log(ds.nodes);
+      console.log(link);
       
       var brush = svg.append("g")
       .datum(function() { return {selected: false, previouslySelected: false}; })
@@ -113,7 +115,8 @@ var outputBinding = new Shiny.OutputBinding();
         .append("circle")
         .attr("class","node")
         .attr("r", 4);
-        
+      
+      console.log(node);
         
       force.on("tick", function() {
         link.attr("x1", function(d) { return d.source.x; })
