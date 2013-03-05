@@ -22,6 +22,8 @@
   float: left;
   margin-left: 5px; 
   margin-bottom: 5px;
+  width: 44px !important;
+  height: 44px;
 }
 </style>
 <script src="http://d3js.org/d3.v3.js"></script>
@@ -62,21 +64,21 @@ var outputBinding = new Shiny.OutputBinding();
         .attr("class", "button control")
         .attr("name", "btn_clear")
         .attr("type", "button")
-        .attr("style", "background-image: url(/images/clear.png);");
-    
+        .attr("style", "background-image: url(images/clear.png);");
+
     var btn_reset = d3.select(el)
       .append("input")
         .attr("class", "button control")
         .attr("name", "btn_reset")
         .attr("type", "button")
-        .attr("style", "background-image: url(/images/reset.png);");
+        .attr("style", "background-image: url(images/reset.png);");
         
     var btn_layout = d3.select(el)
       .append("input")
         .attr("class", "button control")
         .attr("name", "btn_layout")
         .attr("type", "button")
-        .attr("style", "background-image: url(/images/layout.png);");      
+        .attr("style", "background-image: url(images/layout.png);");      
         
     
     var node, link;

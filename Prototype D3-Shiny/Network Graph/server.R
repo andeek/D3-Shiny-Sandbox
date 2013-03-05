@@ -1,4 +1,5 @@
-#.libPaths("/home/andeek/R/library")
+.libPaths("/home/andeek/R/library")
+addResourcePath('images', '/var/shiny-server/www/D3/Network\ Graph/images') 
 
 data_sets <- c("data/football.gml", "data/karate.gml")
 layouts <- c("force")
