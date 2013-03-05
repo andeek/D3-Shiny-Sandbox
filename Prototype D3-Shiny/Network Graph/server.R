@@ -1,4 +1,4 @@
-.libPaths("/home/andeek/R/library")
+#.libPaths("/home/andeek/R/library")
 
 data_sets <- c("data/football.gml", "data/karate.gml")
 layouts <- c("force")

@@ -17,6 +17,12 @@
   stroke: #fff;
   shape-rendering: crispEdges;
 }
+
+.control {
+  float: left;
+  margin-left: 5px; 
+  margin-bottom: 5px;
+}
 </style>
 <script src="http://d3js.org/d3.v3.js"></script>
 <script type="text/javascript">
@@ -33,7 +39,7 @@ var outputBinding = new Shiny.OutputBinding();
 		
 		$(el).html("");
 		
-		var w= 700,
+		var w= 550,
 			  h = 400,
         shiftKey;        
       
@@ -48,7 +54,30 @@ var outputBinding = new Shiny.OutputBinding();
       .each(function() { this.focus(); })
       .append("svg")
   		  .attr("width", w)
-  		  .attr("height", h);
+  		  .attr("height", h)
+        .attr("style", "float: left;");
+    
+    var btn_clear = d3.select(el)
+      .append("input")
+        .attr("class", "button control")
+        .attr("name", "btn_clear")
+        .attr("type", "button")
+        .attr("style", "background-image: url(/images/clear.png);");
+    
+    var btn_reset = d3.select(el)
+      .append("input")
+        .attr("class", "button control")
+        .attr("name", "btn_reset")
+        .attr("type", "button")
+        .attr("style", "background-image: url(/images/reset.png);");
+        
+    var btn_layout = d3.select(el)
+      .append("input")
+        .attr("class", "button control")
+        .attr("name", "btn_layout")
+        .attr("type", "button")
+        .attr("style", "background-image: url(/images/layout.png);");      
+        
     
     var node, link;
 
@@ -82,9 +111,6 @@ var outputBinding = new Shiny.OutputBinding();
         .data(ds.edges).enter()
         .append("line")
         .attr("class", "link");
-      console.log(ds.edges);
-      console.log(ds.nodes);
-      console.log(link);
       
       var brush = svg.append("g")
       .datum(function() { return {selected: false, previouslySelected: false}; })
@@ -115,9 +141,7 @@ var outputBinding = new Shiny.OutputBinding();
         .append("circle")
         .attr("class","node")
         .attr("r", 4);
-      
-      console.log(node);
-        
+
       force.on("tick", function() {
         link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
