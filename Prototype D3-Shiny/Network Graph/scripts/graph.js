@@ -60,7 +60,7 @@ var outputBinding = new Shiny.OutputBinding();
   		  .attr("height", h)
         .attr("style", "float: left;");
     
-    var node, link, force, brush;
+    var node, link, brush, force;
     
     var btn_clear = d3.select(el)
       .append("input")
@@ -69,8 +69,7 @@ var outputBinding = new Shiny.OutputBinding();
         .attr("type", "button")
         .attr("style", "background-image: url(images/clear.png);")        
         .on("click", function(){
-          var circle = svg.selectAll("circle.node");
-          circle.classed("selected", false);
+          node.classed("selected", false);
         }); 
 
     var btn_reset = d3.select(el)
@@ -79,19 +78,16 @@ var outputBinding = new Shiny.OutputBinding();
         .attr("name", "btn_reset")
         .attr("type", "button")
         .attr("style", "background-image: url(images/reset.png);")
-        .on("click", function(){          
-          //remove old nodes/links
-          var circle = svg.selectAll("circle.node");
-          var line = svg.selectAll("line.link");
-          var brush1 = svg.selectAll("brush");
+        .on("click", function(){ 
+          svg.selectAll(".node").remove();
+          svg.selectAll(".link").remove();
+          svg.selectAll(".brush").remove();
           
-          circle.remove();
-          line.remove();
-          brush1.remove();
+          dataset.nodes.forEach(function(d) {
+            d.fixed = false;
+          });
           
-          var node, link, brush;
-          
-          init_drawGraph(dataset, layout);
+          init_drawGraph();
         }); 
         
     var btn_layout = d3.select(el)
@@ -101,52 +97,48 @@ var outputBinding = new Shiny.OutputBinding();
         .attr("type", "button")
         .attr("style", "background-image: url(images/layout.png);")        
         .on("click", function(){  
-          redrawGraph(dataset, layout);
+          redrawGraph();
         });      
     
     init_drawGraph(dataset, layout);
     
-    function init_drawGraph(ds, l) {        
-      switch(l)
+    function init_drawGraph() {        
+      switch(layout)
       {
         case "force":
-          init_forceLayout(ds);
+          init_forceLayout();
           break;
         default:
           break;        
       }        
     }  
     
-    function redrawGraph(ds, l) {        
-      switch(l)
+    function redrawGraph() {        
+      switch(layout)
       {
         case "force":
-          forceLayout(ds);
+          forceLayout();
           break;
         default:
           break;        
       }        
     }
     
-    function forceLayout(ds) {      
-    
-      for(i = 0; i < ds.nodes.length; i++) {
-        if(ds.nodes[i].selected == 1) { 
-          ds.nodes[i].fixed = true;
-          var tempx = ds.nodes[i].x;
-          var tempy = ds.nodes[i].y;
-          
-          ds.nodes[i].x = tempx;
-          ds.nodes[i].y = tempy;
-        }
-      }
+    function forceLayout() {
       
-      console.log(ds.nodes);
-      console.log(node);
+      dataset.nodes.forEach(function(d) {
+          if(d.selected == 1) {
+            d.fixed = true;
+            d.x = d.x;
+            d.y = d.y;
+            d.px = d.x;
+            d.py = d.y; 
+          }          
+        });
       
       force
-        .nodes(ds.nodes)
-        .links(ds.edges)
+        .nodes(dataset.nodes)
+        .links(dataset.edges)
         .start();
 
 
@@ -159,34 +151,30 @@ var outputBinding = new Shiny.OutputBinding();
         node.attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; });
       });
-      
-      node_controls(node, link);   
 
     }
     
-    function init_forceLayout(ds) {
-      
+    function init_forceLayout() {
+    
       force = d3.layout.force()
         .charge(-120)
         .linkDistance(30)
         .size([w, h]);
         
       force
-        .nodes(ds.nodes)
-        .links(ds.edges)
+        .nodes(dataset.nodes)
+        .links(dataset.edges)
         .start();
 
-      link = svg.append("g")
-        .attr("class", "link")
-        .selectAll("line.link")        
-        .data(ds.edges).enter()
+      link = svg.append("g").attr("class", "link").selectAll("line.link")
+        .data(dataset.edges).enter()
         .append("line")
         .attr("class", "link");
       
       brush = svg.append("g")
-      .datum(function() { return {selected: false, previouslySelected: false}; })
-      .attr("class", "brush")
-      .call(d3.svg.brush()
+        .datum(function() { return {selected: false, previouslySelected: false}; })
+        .attr("class", "brush")
+        .call(d3.svg.brush()
         .x(d3.scale.identity().domain([0, w]))
         .y(d3.scale.identity().domain([0, h]))
         .on("brushstart", function(d) {
@@ -205,10 +193,8 @@ var outputBinding = new Shiny.OutputBinding();
           d3.select(this).call(d3.event.target);
         }));
       
-      node = svg.append("g")
-        .attr("class", "node")
-        .selectAll("circle.node")
-        .data(ds.nodes).enter()
+      node = svg.append("g").attr("class", "node").selectAll("circle.node")
+        .data(dataset.nodes).enter()
         .append("circle")
         .attr("class","node")
         .attr("r", 4);
@@ -223,11 +209,10 @@ var outputBinding = new Shiny.OutputBinding();
         .attr("cy", function(d) { return d.y; });
       });
       
-      node_controls(node, link);      
-      
+      node_controls();        
     }
     
-    function node_controls(node, link) {
+    function node_controls() {
       node.on("mousedown", function(d) {
         if (!d.selected) { // Don't deselect on shift-drag.
           if (!shiftKey) node.classed("selected", function(p) { return p.selected = d === p; });
@@ -238,7 +223,7 @@ var outputBinding = new Shiny.OutputBinding();
         if (d.selected && shiftKey) d3.select(this).classed("selected", d.selected = false);
       })
       .call(d3.behavior.drag()
-        .on("drag", function(d) { nudge(d3.event.dx, d3.event.dy, node, link); }));
+        .on("drag", function(d) { nudge(d3.event.dx, d3.event.dy); }));
       
     }
     
@@ -254,8 +239,8 @@ var outputBinding = new Shiny.OutputBinding();
       link.filter(function(d) { return d.target.selected; })
           .attr("x2", function(d) { return d.target.x; })
           .attr("y2", function(d) { return d.target.y; });
-    
-      d3.event.preventDefault();
+      
+      //d3.event.preventDefault();
     }
     
     function keydown() {
