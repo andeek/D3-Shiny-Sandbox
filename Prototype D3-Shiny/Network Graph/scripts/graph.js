@@ -222,10 +222,24 @@ var outputBinding = new Shiny.OutputBinding();
       .on("mouseup", function(d) {
         if (d.selected && shiftKey) d3.select(this).classed("selected", d.selected = false);
       })
+      .on("mouseover.tooltip", function(d) {
+        d3.select("text#" + d.id).remove();
+        d3.select("svg")
+          .append("text")
+            .text(d.id)
+            .attr("x", d.x + 1)
+            .attr("y", d.y - 2)
+            .attr("id", d.id);      
+      })
+      .on("mouseout.tooltip", function(d) {
+        d3.select("text#" + d.id).remove();      
+      })
       .call(d3.behavior.drag()
         .on("drag", function(d) { nudge(d3.event.dx, d3.event.dy); }));
       
     }
+
+    
     
     function nudge(dx, dy) {
       node.filter(function(d) { return d.selected; })
