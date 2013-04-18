@@ -28,16 +28,6 @@
   margin-left: 5px;
   width: 44px !important;  
 }
-
-.summary{
-  border: 1px solid #e3e3e3;
-  background-color: #f5f5f5;
-  min-height:10px;
-  border-radius: 4px;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
-  box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
-  padding: 19px;
-}
 </style>
 <script src="http://d3js.org/d3.v3.js"></script>
 <script type="text/javascript">
@@ -45,7 +35,7 @@
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
   find: function(scope) {
-    return $(scope).find('.shiny-graph-output');
+    return $(scope).find('.d3graph');
   },
   renderValue: function(el, data) {  
 	 force_wrapper(el, data);
@@ -55,15 +45,14 @@ Shiny.outputBindings.register(outputBinding);
 var inputBinding = new Shiny.InputBinding();
 $.extend(inputBinding, {
   find: function(scope) {
-    return $(scope).find('.shiny-summary-output');
+    return $(scope).find('.d3graph');
   },
   getValue: function(el) {
-    return "Hello World!";
-  },
-  setValue: function(el, value) {
-    d3.select(el)
-      .append("p")
-        .text(value);
+    var mycars = new Array();
+    mycars[0] = "Saab";
+    mycars[1] = "Volvo";
+    
+    return mycars;
   },
   subscribe: function(el, callback) {
     $(el).on("change.inputBinding", function(e) {
@@ -139,6 +128,7 @@ function force_wrapper(el, data) {
       .attr("style", "background-image: url(images/layout.png);")        
       .on("click", function(){  
         redrawGraph();
+        $(".d3graph").trigger("change");
       });      
   
   init_drawGraph(dataset, layout);
@@ -231,8 +221,7 @@ function force_wrapper(el, data) {
       })
       .on("brushend", function() {
         d3.event.target.clear();
-        d3.select(this).call(d3.event.target);
-        $(".shiny-summary-output").trigger("change");
+        d3.select(this).call(d3.event.target);        
       }));
     
     node = svg.append("g").attr("class", "node").selectAll("circle.node")

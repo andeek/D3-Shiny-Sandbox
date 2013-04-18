@@ -1,13 +1,13 @@
 dynGraph <- function(outputId) 
 {
   #HTML(paste("<div id=\"", outputId, "\" class=\"shiny-graph-output\"><svg /></div>", sep=""))
-  div(id = outputId, class="shiny-graph-output")
+  div(id = outputId, class="d3graph")
 }
 
-dynSummary <- function(outputId)
-{
-  div(id = outputId, class="shiny-summary-output summary", tag("p","hello world"))
-}
+#dynSummary <- function(outputId)
+#{
+#  div(id = outputId, class="shiny-summary-output summary", style="display:none;", tag("p",textOutput("d3summary")))
+#}
 
 shinyUI(pageWithSidebar(
   
@@ -22,6 +22,6 @@ shinyUI(pageWithSidebar(
   mainPanel(
     includeHTML("scripts/graph.js"),
     dynGraph(outputId = 'd3output'),
-    dynSummary(outputId = 'd3summary')
+    tableOutput('d3summary')
   )
 ))

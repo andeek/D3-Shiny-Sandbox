@@ -1,7 +1,8 @@
 .libPaths("/home/andeek/R/library")
-#addResourcePath('images', '~/ShinyApps/NetworkGraph/images')
+addResourcePath('images', '~/ShinyApps/NetworkGraph/images')
 #addResourcePath('images', '/var/shiny-server/www/D3/Network\ Graph/images') 
-addResourcePath('images', 'U:/Documents/Projects/Community-Detection/Prototype\ D3-Shiny/Network\ Graph/images')
+#addResourcePath('images', 'U:/Documents/Projects/Community-Detection/Prototype\ D3-Shiny/Network\ Graph/images')
+#addResourcePath('images', '~/Documents/Projects/Community-Detection/Prototype\ D3-Shiny/Network\ Graph/images')
 
 
 data_sets <- c("data/football.gml", "data/karate.gml")
@@ -28,7 +29,7 @@ shinyServer(function(input, output) {
     return(paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""))
   }
   
-  data <- reactive(function() {
+  data <- reactive({
     if(is.null(input$dataset) | is.null(input$layout))
       return()
     
@@ -40,6 +41,18 @@ shinyServer(function(input, output) {
     }
   })
   
+  test <- reactive({    
+    # Compose data frame
+    data.frame(
+      Name = c("Integer", 
+               "Decimal",
+               "Range",
+               "Custom Format",
+               "Animation"))
+  }) 
   
-  output$d3output <- reactive(function() { data() })
+
+  output$d3output <- reactive({ data() })
+  output$d3summary <- renderTable({ test() }) 
+  
 })
