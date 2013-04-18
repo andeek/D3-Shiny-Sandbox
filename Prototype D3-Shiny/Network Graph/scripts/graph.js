@@ -37,11 +37,37 @@ $.extend(outputBinding, {
   find: function(scope) {
     return $(scope).find('.shiny-graph-output');
   },
-  renderValue: function(el, data) {  	
-	//remove the old graph
-	var svg = d3.select(el).select("svg");      
-	svg.remove();
-	
+  renderValue: function(el, data) {  
+	 force_wrapper(el, data);
+}});
+Shiny.outputBindings.register(outputBinding);
+
+var inputBinding = new Shiny.InputBinding();
+$.extend(inputBinding, {
+  find: function(scope) {
+    return $(scope).find('.shiny-summary-output');
+  },
+  getValue: function(el) {
+    return "Hello World!";
+  },
+  setValue: function(el, data) {
+    d3.select(el)
+      .append("p")
+        .text(data);
+  },
+  subscribe: function(el, callback) {
+    $(el).on("change.inputBinding", function(e) {
+      callback();
+    });
+  },
+});
+Shiny.inputBindings.register(inputBinding);
+
+function force_wrapper(el, data) {
+  //remove the old graph
+  //var svg = d3.select(el).select("svg");      
+  //svg.remove();
+  
 	$(el).html("");
 	
 	var w= 550,
@@ -145,8 +171,8 @@ $.extend(outputBinding, {
       .nodes(dataset.nodes)
       .links(dataset.edges)
       .start();
-
-
+  
+  
     force.on("tick", function() {
       link.attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
@@ -156,7 +182,7 @@ $.extend(outputBinding, {
       node.attr("cx", function(d) { return d.x; })
       .attr("cy", function(d) { return d.y; });
     });
-
+  
   }
   
   function init_forceLayout() {
@@ -170,7 +196,7 @@ $.extend(outputBinding, {
       .nodes(dataset.nodes)
       .links(dataset.edges)
       .start();
-
+  
     link = svg.append("g").attr("class", "link").selectAll("line.link")
       .data(dataset.edges).enter()
       .append("line")
@@ -196,7 +222,7 @@ $.extend(outputBinding, {
       .on("brushend", function() {
         d3.event.target.clear();
         d3.select(this).call(d3.event.target);
-        $(".shiny-graph-output").trigger("change");
+        $(".d3input").trigger("change");
       }));
     
     node = svg.append("g").attr("class", "node").selectAll("circle.node")
@@ -207,7 +233,7 @@ $.extend(outputBinding, {
       
     node.append("title")
       .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
-
+  
     force.on("tick", function() {
       link.attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
@@ -261,29 +287,10 @@ $.extend(outputBinding, {
     }
     shiftKey = d3.event.shiftKey;
   }
-
+  
   function keyup() {
     shiftKey = d3.event.shiftKey;
-  } 
-}});
-Shiny.outputBindings.register(outputBinding);
-
-var inputBinding = new Shiny.InputBinding();
-$.extend(inputBinding, {
-  find: function(scope) {
-    return $(scope).find('d3input');
-  },
-  getValue: function(el) {
-    return "Hello World!";
-  },
-  subscribe: function(el, callback) {
-    $(el).on("change.inputBinding", function(e) {
-      callback();
-    });
-  },
-});
-Shiny.inputBindings.register(inputBinding);
-
-
+  }
+}
 
 </script>

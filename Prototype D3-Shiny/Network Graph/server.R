@@ -1,5 +1,8 @@
 .libPaths("/home/andeek/R/library")
-addResourcePath('images', '/var/shiny-server/www/D3/Network\ Graph/images') 
+#addResourcePath('images', '~/ShinyApps/NetworkGraph/images')
+#addResourcePath('images', '/var/shiny-server/www/D3/Network\ Graph/images') 
+addResourcePath('images', 'U:/Documents/Projects/Community-Detection/Prototype\ D3-Shiny/Network\ Graph/images')
+
 
 data_sets <- c("data/football.gml", "data/karate.gml")
 layouts <- c("force")
@@ -38,5 +41,5 @@ shinyServer(function(input, output) {
   })
   
   
-  output$perfplot <- reactive(function() { data() })
+  output$d3output <- reactive(function() { data() })
 })

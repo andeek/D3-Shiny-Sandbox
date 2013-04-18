@@ -1,10 +1,12 @@
-reactivePlot <- function(outputId) 
+dynGraph <- function(outputId) 
 {
-  HTML(paste("<div id=\"", outputId, "\" class=\"shiny-graph-output\"><svg /></div>", sep=""))
+  #HTML(paste("<div id=\"", outputId, "\" class=\"shiny-graph-output\"><svg /></div>", sep=""))
+  div(id = outputId, class="shiny-graph-output")
 }
 
-d3Input <- function(inputID, value) {
-  div(id=inputID, class=inputID, tag("p",value));
+dynSummary <- function(outputId)
+{
+  div(id = outputId, class="shiny-summary-output")
 }
 
 shinyUI(pageWithSidebar(
@@ -19,7 +21,9 @@ shinyUI(pageWithSidebar(
   
   mainPanel(
     includeHTML("scripts/graph.js"),
-    reactivePlot(outputId = "perfplot"),
-    d3Input('d3input','')
+    tabsetPanel(
+      tabPanel("Graph", dynGraph(outputId = 'd3output')), 
+      tabPanel("Summary", dynSummary(outputId = 'd3summary'))
+    )
   )
 ))
