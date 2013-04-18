@@ -28,6 +28,16 @@
   margin-left: 5px;
   width: 44px !important;  
 }
+
+.summary{
+  border: 1px solid #e3e3e3;
+  background-color: #f5f5f5;
+  min-height:10px;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+  padding: 19px;
+}
 </style>
 <script src="http://d3js.org/d3.v3.js"></script>
 <script type="text/javascript">
@@ -50,10 +60,10 @@ $.extend(inputBinding, {
   getValue: function(el) {
     return "Hello World!";
   },
-  setValue: function(el, data) {
+  setValue: function(el, value) {
     d3.select(el)
       .append("p")
-        .text(data);
+        .text(value);
   },
   subscribe: function(el, callback) {
     $(el).on("change.inputBinding", function(e) {
@@ -85,8 +95,8 @@ function force_wrapper(el, data) {
     .each(function() { this.focus(); })
     .append("svg")
   	  .attr("width", w)
-		  .attr("height", h)
-      .attr("style", "float: left;");
+		  .attr("height", h);
+      //.attr("style", "float: left;");
   
   var node, link, brush, force;
   
@@ -222,7 +232,7 @@ function force_wrapper(el, data) {
       .on("brushend", function() {
         d3.event.target.clear();
         d3.select(this).call(d3.event.target);
-        $(".d3input").trigger("change");
+        $(".shiny-summary-output").trigger("change");
       }));
     
     node = svg.append("g").attr("class", "node").selectAll("circle.node")

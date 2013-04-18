@@ -6,7 +6,7 @@ dynGraph <- function(outputId)
 
 dynSummary <- function(outputId)
 {
-  div(id = outputId, class="shiny-summary-output")
+  div(id = outputId, class="shiny-summary-output summary", tag("p","hello world"))
 }
 
 shinyUI(pageWithSidebar(
@@ -21,9 +21,7 @@ shinyUI(pageWithSidebar(
   
   mainPanel(
     includeHTML("scripts/graph.js"),
-    tabsetPanel(
-      tabPanel("Graph", dynGraph(outputId = 'd3output')), 
-      tabPanel("Summary", dynSummary(outputId = 'd3summary'))
-    )
+    dynGraph(outputId = 'd3output'),
+    dynSummary(outputId = 'd3summary')
   )
 ))
