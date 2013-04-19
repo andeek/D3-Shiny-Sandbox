@@ -32,9 +32,8 @@
 <script src="http://d3js.org/d3.v3.js"></script>
 <script type="text/javascript">
 
-var within = (new Date().getTime() / 1000).toString().slice(-3);
-var outside = (new Date().getTime() / 1000).toString().slice(-3);
-
+var within = 0;
+var outside = 0;
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
   find: function(scope) {
@@ -103,6 +102,8 @@ function force_wrapper(el, data) {
       .attr("style", "background-image: url(images/clear.png);")        
       .on("click", function(){
         node.classed("selected", false);
+        countconnections();
+        $(".d3graph").trigger("change");
       }); 
     
   var btn_reset = btn_div
@@ -121,6 +122,8 @@ function force_wrapper(el, data) {
         });
         
         init_drawGraph();
+        countconnections();
+        $(".d3graph").trigger("change");
       }); 
   
   var btn_layout = btn_div
@@ -131,6 +134,8 @@ function force_wrapper(el, data) {
       .attr("style", "background-image: url(images/layout.png);")        
       .on("click", function(){  
         redrawGraph();
+        countconnections();
+        $(".d3graph").trigger("change");
       });      
   
   init_drawGraph(dataset, layout);
@@ -296,17 +301,47 @@ function force_wrapper(el, data) {
   }
   
   function countconnections() {
-    var selectedNodes = svg.selectAll(".selected")[0];
-    //var selectedLinks = selectedNodes.forEach(function(d,i) {
-    //    svg.selectAll(".link").filter(function(o) {
-    //      return o.source.index == i || o.target.index == i;
-    //    })
-    //  })
+    var selectedNodes = new Array()
+    var selectedLinks = new Array();
+    var withinLinks = new Array();
+    var nWithinLinks = 0;
+    var nTotalLinks = 0;    
+    
+    var counterl = 0;
+    var countern = 0;
+    dataset.nodes.forEach(function(d, i) {
+      if(d.selected == 1) {
+        selectedNodes[countern] = d.id;
+        dataset.edges.forEach(function(o) {
+          if(o.source.index == i || o.target.index == i) {
+            //stop double pushing
+            if(selectedLinks.indexOf([o.source.id, o.target.id]) == -1) {
+              selectedLinks[counterl] = [o.source.id, o.target.id];
+              counterl += 1;
+            }
+          }          
+        })
+        countern += 1;
+      }
+    });
+    
+    nTotalLinks = selectedLinks.length - selectedNodes.length;    
 
-    within = (new Date().getTime() / 1000).toString().slice(-3);
-    outside = (new Date().getTime() / 1000).toString().slice(-3);
-    console.log(selectedNodes.length);
-    console.log(svg.selectAll("line"));
+    selectedLinks.forEach(function(d,i) {
+      if(selectedNodes.indexOf(d[0]) != -1 && selectedNodes.indexOf(d[1]) != -1) {
+        //stop double pushing
+        if(withinLinks.indexOf(d) == -1) {
+          withinLinks.push(d);
+        }
+      }
+    })
+    
+    console.log(withinLinks);
+    
+    nWithinLinks = withinLinks.length;
+        
+    within = nWithinLinks/2;
+    outside = nTotalLinks - nWithinLinks/2;
   }
 
 }

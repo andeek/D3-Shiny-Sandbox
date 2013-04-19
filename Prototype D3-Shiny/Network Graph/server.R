@@ -44,7 +44,7 @@ shinyServer(function(input, output) {
   
   datasetInput <- reactive({ return(data.frame(Within=input[[names(input)[1]]][1], Outside=input[[names(input)[1]]][2], row.names="Connections")) })
   output$d3summary <- renderTable({dataset <- datasetInput()
-                                   print(dataset)})
+                                   print(dataset)}, digits=0)
    
   
 })
