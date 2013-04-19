@@ -312,8 +312,8 @@ function force_wrapper(el, data) {
     dataset.nodes.forEach(function(d, i) {
       if(d.selected == 1) {
         selectedNodes[countern] = d.id;
-        dataset.edges.forEach(function(o) {
-          if(o.source.index == i || o.target.index == i) {
+        dataset.edges.forEach(function(o,j) {
+          if(o.source.id == d.id || o.target.id == d.id) {
             selectedLinks[counterl] = [o.source.id, o.target.id];
             counterl += 1;
           }          
@@ -321,24 +321,47 @@ function force_wrapper(el, data) {
         countern += 1;
       }
     });
-    console.log($.unique(selectedLinks).length);
-    console.log(selectedLinks.length);
-    nTotalLinks = selectedLinks.length;    
-
-    selectedLinks.forEach(function(d,i) {
-      if(selectedNodes.indexOf(d[0]) != -1 && selectedNodes.indexOf(d[1]) != -1) {
-        //stop double pushing
-        console.log(withinLinks.indexOf(d))
-        if(withinLinks.indexOf(d) == -1) {
-          withinLinks.push(d);
+      
+    for(var i=0;i<selectedLinks.length;i++) {
+      for(var j=1;j<selectedLinks.length;j++){
+        //double link in selected
+        if(selectedLinks[i][0] == selectedLinks[j][1] && selectedLinks[i][1] == selectedLinks[j][0]) {
+          selectedLinks.splice(j,1);
         }
       }
-    })
-
+    }
+    
+    /*for(var i=0;i<selectedLinks.length;i++) {
+      for(var j=1;j<selectedLinks.length;j++){
+        //double link in selected
+        if(selectedLinks[i][0] == selectedLinks[j][0] && selectedLinks[i][1] == selectedLinks[j][1]) {
+          selectedLinks.splice(j,1);
+        }
+      }
+    }*/
+    
+    for(var i=0;i<selectedLinks.length;i++) {
+      //if both source and target in selected
+      if(selectedNodes.indexOf(selectedLinks[i][0]) != -1 && selectedNodes.indexOf(selectedLinks[i][1]) != -1) {        
+        withinLinks.push(selectedLinks[i]);
+      }
+    }
+    
+    //withinLinks.forEach(function(d,i) {
+    //  withinLinks.forEach(function(o,j) {
+    //    if((d[0] == o[0] && d[1] == o[1])||(d[0] == o[1] && d[1] == o[0])) { 
+    //      withinLinks.splice(i,1);
+    //    }
+    //  })
+    //})
+    nTotalLinks = selectedLinks.length;
     nWithinLinks = withinLinks.length;
-        
-    within = nWithinLinks/2;
-    outside = nTotalLinks - nWithinLinks/2;
+    
+    console.log(selectedLinks);
+    console.log(withinLinks);
+    
+    within = nWithinLinks;
+    outside = nTotalLinks - nWithinLinks;
   }
 
 }
