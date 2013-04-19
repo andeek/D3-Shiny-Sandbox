@@ -1,7 +1,7 @@
-dynGraph <- function(outputId) 
+dynGraph <- function(inputoutputId) 
 {
   #HTML(paste("<div id=\"", outputId, "\" class=\"shiny-graph-output\"><svg /></div>", sep=""))
-  div(id = outputId, class="d3graph")
+  div(id = inputoutputId, class="d3graph")
 }
 
 #dynSummary <- function(outputId)
@@ -16,12 +16,13 @@ shinyUI(pageWithSidebar(
   sidebarPanel(
     uiOutput("choose_dataset"),    
     uiOutput("choose_layout"),
-    helpText(HTML("All source available on <a href = \"https://github.com/andeek/Community-Detection/tree/master/Prototype%20D3-Shiny/Network%20Graph\" target=\"_blank\">Github</a>"))
+    helpText(HTML("All source available on <a href = \"https://github.com/andeek/Community-Detection/tree/master/Prototype%20D3-Shiny/Network%20Graph\" target=\"_blank\">Github</a>")),
+    p("User Selection"),
+    tableOutput('d3summary')
   ),
   
   mainPanel(
     includeHTML("scripts/graph.js"),
-    dynGraph(outputId = 'd3output'),
-    tableOutput('d3summary')
+    dynGraph(inputoutputId = 'd3io')
   )
 ))

@@ -8,6 +8,13 @@ addResourcePath('images', '~/ShinyApps/NetworkGraph/images')
 data_sets <- c("data/football.gml", "data/karate.gml")
 layouts <- c("force")
 
+getXMLfromFile <- function(file) {
+  require(igraph)
+  graph<-read.graph(file, format="gml")
+  write.graph(graph, paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""), format="graphml")
+  return(paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""))
+}
+
 shinyServer(function(input, output) {
   source("code/GraphMLtoJSON.R")
   # Drop-down selection box for which data set
@@ -22,13 +29,6 @@ shinyServer(function(input, output) {
     selectInput("layout", "Graph Layout", as.list(layouts))
   })
   
-  getXMLfromFile <- function(file) {
-    require(igraph)
-    graph<-read.graph(file, format="gml")
-    write.graph(graph, paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""), format="graphml")
-    return(paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""))
-  }
-  
   data <- reactive({
     if(is.null(input$dataset) | is.null(input$layout))
       return()
@@ -40,19 +40,11 @@ shinyServer(function(input, output) {
       return()  
     }
   })
+  output$d3io <- reactive({ data() })
   
-  test <- reactive({    
-    # Compose data frame
-    data.frame(
-      Name = c("Integer", 
-               "Decimal",
-               "Range",
-               "Custom Format",
-               "Animation"))
-  }) 
-  
-
-  output$d3output <- reactive({ data() })
-  output$d3summary <- renderTable({ test() }) 
+  datasetInput <- reactive({ return(data.frame(Within=input[[names(input)[1]]][1], Outside=input[[names(input)[1]]][2], row.names="Connections")) })
+  output$d3summary <- renderTable({dataset <- datasetInput()
+                                   print(dataset)})
+   
   
 })

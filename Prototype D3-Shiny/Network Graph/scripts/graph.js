@@ -32,13 +32,16 @@
 <script src="http://d3js.org/d3.v3.js"></script>
 <script type="text/javascript">
 
+var within = (new Date().getTime() / 1000).toString().slice(-3);
+var outside = (new Date().getTime() / 1000).toString().slice(-3);
+
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
   find: function(scope) {
     return $(scope).find('.d3graph');
   },
   renderValue: function(el, data) {  
-	 force_wrapper(el, data);
+	  force_wrapper(el, data);
 }});
 Shiny.outputBindings.register(outputBinding);
 
@@ -48,11 +51,11 @@ $.extend(inputBinding, {
     return $(scope).find('.d3graph');
   },
   getValue: function(el) {
-    var mycars = new Array();
-    mycars[0] = "Saab";
-    mycars[1] = "Volvo";
+    var results = new Array();
+    results[0] = within;
+    results[1] = outside;
     
-    return mycars;
+    return results;
   },
   subscribe: function(el, callback) {
     $(el).on("change.inputBinding", function(e) {
@@ -128,7 +131,6 @@ function force_wrapper(el, data) {
       .attr("style", "background-image: url(images/layout.png);")        
       .on("click", function(){  
         redrawGraph();
-        $(".d3graph").trigger("change");
       });      
   
   init_drawGraph(dataset, layout);
@@ -221,7 +223,9 @@ function force_wrapper(el, data) {
       })
       .on("brushend", function() {
         d3.event.target.clear();
-        d3.select(this).call(d3.event.target);        
+        d3.select(this).call(d3.event.target);
+        countconnections();
+        $(".d3graph").trigger("change");
       }));
     
     node = svg.append("g").attr("class", "node").selectAll("circle.node")
@@ -290,6 +294,21 @@ function force_wrapper(el, data) {
   function keyup() {
     shiftKey = d3.event.shiftKey;
   }
+  
+  function countconnections() {
+    var selectedNodes = svg.selectAll(".selected")[0];
+    //var selectedLinks = selectedNodes.forEach(function(d,i) {
+    //    svg.selectAll(".link").filter(function(o) {
+    //      return o.source.index == i || o.target.index == i;
+    //    })
+    //  })
+
+    within = (new Date().getTime() / 1000).toString().slice(-3);
+    outside = (new Date().getTime() / 1000).toString().slice(-3);
+    console.log(selectedNodes.length);
+    console.log(svg.selectAll("line"));
+  }
+
 }
 
 </script>
