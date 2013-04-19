@@ -314,30 +314,27 @@ function force_wrapper(el, data) {
         selectedNodes[countern] = d.id;
         dataset.edges.forEach(function(o) {
           if(o.source.index == i || o.target.index == i) {
-            //stop double pushing
-            if(selectedLinks.indexOf([o.source.id, o.target.id]) == -1) {
-              selectedLinks[counterl] = [o.source.id, o.target.id];
-              counterl += 1;
-            }
+            selectedLinks[counterl] = [o.source.id, o.target.id];
+            counterl += 1;
           }          
         })
         countern += 1;
       }
     });
-    
-    nTotalLinks = selectedLinks.length - selectedNodes.length;    
+    console.log($.unique(selectedLinks).length);
+    console.log(selectedLinks.length);
+    nTotalLinks = selectedLinks.length;    
 
     selectedLinks.forEach(function(d,i) {
       if(selectedNodes.indexOf(d[0]) != -1 && selectedNodes.indexOf(d[1]) != -1) {
         //stop double pushing
+        console.log(withinLinks.indexOf(d))
         if(withinLinks.indexOf(d) == -1) {
           withinLinks.push(d);
         }
       }
     })
-    
-    console.log(withinLinks);
-    
+
     nWithinLinks = withinLinks.length;
         
     within = nWithinLinks/2;
