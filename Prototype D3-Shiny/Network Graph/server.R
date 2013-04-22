@@ -4,6 +4,7 @@ addResourcePath('images', '~/ShinyApps/NetworkGraph/images')
 #addResourcePath('images', 'U:/Documents/Projects/Community-Detection/Prototype\ D3-Shiny/Network\ Graph/images')
 #addResourcePath('images', '~/Documents/Projects/Community-Detection/Prototype\ D3-Shiny/Network\ Graph/images')
 
+library(plyr)
 
 data_sets <- c("data/football.gml", "data/karate.gml")
 layouts <- c("force")
@@ -42,7 +43,22 @@ shinyServer(function(input, output) {
   })
   output$d3io <- reactive({ data() })
   
-  datasetInput <- reactive({ return(data.frame(Within=input[[names(input)[1]]][1], Outside=input[[names(input)[1]]][2], row.names="Connections")) })
+  datasetInput <- reactive({
+    if(names(input)[1] == "d3io"){
+      nodes_selected<-subset(ldply(input[[names(input)[names(input) == "d3io"]]][1][[1]], data.frame), selected == 1)$id
+      edges<-ldply(input[[names(input)[names(input) == "d3io"]]][2][[1]], data.frame)
+      edges_selected<-subset(edges, source.selected == 1 | target.selected == 1)
+      within_selected<-subset(edges_selected, source.id %in% nodes_selected & target.id %in% nodes_selected)
+      
+      n_total_selected<-nrow(edges_selected)
+      n_within_selected<-nrow(within_selected)
+      
+      return(data.frame(Within=n_within_selected, Outside=n_total_selected - n_within_selected, row.names="Connections"))
+    } else {
+      return(data.frame(Within=0, Outside=0, row.names="Connections"))
+    }   
+  })
+  
   output$d3summary <- renderTable({dataset <- datasetInput()
                                    print(dataset)}, digits=0)
    

@@ -32,8 +32,7 @@
 <script src="http://d3js.org/d3.v3.js"></script>
 <script type="text/javascript">
 
-var within = 0;
-var outside = 0;
+var dataset;
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
   find: function(scope) {
@@ -50,11 +49,7 @@ $.extend(inputBinding, {
     return $(scope).find('.d3graph');
   },
   getValue: function(el) {
-    var results = new Array();
-    results[0] = within;
-    results[1] = outside;
-    
-    return results;
+    return dataset;
   },
   subscribe: function(el, callback) {
     $(el).on("change.inputBinding", function(e) {
@@ -77,7 +72,7 @@ function force_wrapper(el, data) {
     
 	var layout = data.layout;
   
-  var dataset = JSON.parse(data.data_json)
+  dataset = JSON.parse(data.data_json)
   
   var svg = d3.select(el)
     .attr("tabindex", 1)
@@ -102,7 +97,7 @@ function force_wrapper(el, data) {
       .attr("style", "background-image: url(images/clear.png);")        
       .on("click", function(){
         node.classed("selected", false);
-        countconnections();
+        dataset.nodes.forEach(function(d) {d.selected = 0;});
         $(".d3graph").trigger("change");
       }); 
     
@@ -119,10 +114,10 @@ function force_wrapper(el, data) {
         
         dataset.nodes.forEach(function(d) {
           d.fixed = false;
+          d.selected = 0;
         });
         
         init_drawGraph();
-        countconnections();
         $(".d3graph").trigger("change");
       }); 
   
@@ -134,7 +129,6 @@ function force_wrapper(el, data) {
       .attr("style", "background-image: url(images/layout.png);")        
       .on("click", function(){  
         redrawGraph();
-        countconnections();
         $(".d3graph").trigger("change");
       });      
   
@@ -229,7 +223,6 @@ function force_wrapper(el, data) {
       .on("brushend", function() {
         d3.event.target.clear();
         d3.select(this).call(d3.event.target);
-        countconnections();
         $(".d3graph").trigger("change");
       }));
     
@@ -298,70 +291,6 @@ function force_wrapper(el, data) {
   
   function keyup() {
     shiftKey = d3.event.shiftKey;
-  }
-  
-  function countconnections() {
-    var selectedNodes = new Array()
-    var selectedLinks = new Array();
-    var withinLinks = new Array();
-    var nWithinLinks = 0;
-    var nTotalLinks = 0;    
-    
-    var counterl = 0;
-    var countern = 0;
-    dataset.nodes.forEach(function(d, i) {
-      if(d.selected == 1) {
-        selectedNodes[countern] = d.id;
-        dataset.edges.forEach(function(o,j) {
-          if(o.source.id == d.id || o.target.id == d.id) {
-            selectedLinks[counterl] = [o.source.id, o.target.id];
-            counterl += 1;
-          }          
-        })
-        countern += 1;
-      }
-    });
-      
-    for(var i=0;i<selectedLinks.length;i++) {
-      for(var j=1;j<selectedLinks.length;j++){
-        //double link in selected
-        if(selectedLinks[i][0] == selectedLinks[j][1] && selectedLinks[i][1] == selectedLinks[j][0]) {
-          selectedLinks.splice(j,1);
-        }
-      }
-    }
-    
-    /*for(var i=0;i<selectedLinks.length;i++) {
-      for(var j=1;j<selectedLinks.length;j++){
-        //double link in selected
-        if(selectedLinks[i][0] == selectedLinks[j][0] && selectedLinks[i][1] == selectedLinks[j][1]) {
-          selectedLinks.splice(j,1);
-        }
-      }
-    }*/
-    
-    for(var i=0;i<selectedLinks.length;i++) {
-      //if both source and target in selected
-      if(selectedNodes.indexOf(selectedLinks[i][0]) != -1 && selectedNodes.indexOf(selectedLinks[i][1]) != -1) {        
-        withinLinks.push(selectedLinks[i]);
-      }
-    }
-    
-    //withinLinks.forEach(function(d,i) {
-    //  withinLinks.forEach(function(o,j) {
-    //    if((d[0] == o[0] && d[1] == o[1])||(d[0] == o[1] && d[1] == o[0])) { 
-    //      withinLinks.splice(i,1);
-    //    }
-    //  })
-    //})
-    nTotalLinks = selectedLinks.length;
-    nWithinLinks = withinLinks.length;
-    
-    console.log(selectedLinks);
-    console.log(withinLinks);
-    
-    within = nWithinLinks;
-    outside = nTotalLinks - nWithinLinks;
   }
 
 }
