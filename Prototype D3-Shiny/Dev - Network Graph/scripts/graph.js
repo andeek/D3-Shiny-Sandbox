@@ -8,6 +8,11 @@
   stroke: red;
 }
 
+.hidden {
+  stroke-width: 0px;
+  opacity: 0;
+}
+
 .link {
   stroke: #999;
 }
@@ -33,6 +38,7 @@
 <script type="text/javascript">
 
 var dataset;
+var group_indx = 0;
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
   find: function(scope) {
@@ -84,7 +90,7 @@ function force_wrapper(el, data) {
 		  .attr("height", h);
       //.attr("style", "float: left;");
   
-  var node, link, brush, force;
+  var node, link, brush, force, node_back, link_back;
   
   var btn_div  = d3.select(el).append("div")
     .attr("class", "button container");
@@ -206,7 +212,7 @@ function force_wrapper(el, data) {
       .attr("class", "link");
     
     brush = svg.append("g")
-      .datum(function() { return {selected: false, previouslySelected: false}; })
+      .datum(function() { return {selected: false, previouslySelected: false, group: -1, hidden: false}; })
       .attr("class", "brush")
       .call(d3.svg.brush()
       .x(d3.scale.identity().domain([0, w]))
@@ -260,8 +266,9 @@ function force_wrapper(el, data) {
     .on("mouseup", function(d) {
       if (d.selected && shiftKey) d3.select(this).classed("selected", d.selected = false);
     })
-    .call(d3.behavior.drag()
-      .on("drag", function(d) { nudge(d3.event.dx, d3.event.dy); }));
+    .call(force.drag);
+    //.call(d3.behavior.drag()
+    //  .on("drag", function(d) { nudge(d3.event.dx, d3.event.dy); }));
     
   }    
   
@@ -281,12 +288,56 @@ function force_wrapper(el, data) {
     //d3.event.preventDefault();
   }
   
+  function group() {
+    var selected = node.filter(function(d) { return d.selected; })
+    
+    console.log(link);
+    
+    //add the central node (don't forget to add weight and size later)
+    addNode("grp" + group_indx);
+    
+    //add all the links
+    selected.forEach(function(d,i){
+      var i = 0;
+      while (i < link.length) {
+        if (link[i]['source'] == d.id) {
+          addLink("grp" + group_indx, link[i]['target'])
+          i++;
+        } else if(link[i]['target'] == d.id) {
+          addLink(link[i]['source'], "grp" + group_indx)
+          i++;
+        }
+        else i++;
+      }    
+    })
+    
+    //class nodes for later
+    selected
+      .each(function(d) {d.group = group_indx;
+                        d.hidden = true;
+      })
+      .attr("group", group_indx)
+    
+    //store grouped/removed nodes and links for later
+    node_back = node;
+    link_back = link;
+    
+    //remove grouped nodes
+    selected
+      .forEach(function(d){ removeNode(d.id); })
+    
+    group_indx += 1;
+    
+    update();
+  }
+  
   function keydown() {
     if (!d3.event.metaKey) switch (d3.event.keyCode) {
       case 38: nudge( 0, -1); break; // UP
       case 40: nudge( 0, +1); break; // DOWN
       case 37: nudge(-1,  0); break; // LEFT
       case 39: nudge(+1,  0); break; // RIGHT
+      case 71: group(); break; //G -- group selected
     }
     shiftKey = d3.event.shiftKey;
   }
@@ -294,7 +345,99 @@ function force_wrapper(el, data) {
   function keyup() {
     shiftKey = d3.event.shiftKey;
   }
+  
+  //helper functions for nodes/links
+  function hideNode(id) {
+    var i = 0;
+    var n = findNode(id);
+    while (i < link.length) {
+      if ((link[i]['source'] == n)||(link[i]['target'] == n)) {
+        link[i].classed("hidden");
+        i++;
+      }
+      else i++;
+    }
+    node.filter(function(d){ return d.id == findNodeIndex(id)})
+      .classed("hidden");
+    update();    
+  }
+  
+  function showNode(id) {
+    var i = 0;
+    var n = findNode(id);
+    while (i < link.length) {
+      if ((link[i]['source'] == n)||(link[i]['target'] == n)) {
+        link[i].classed("hidden", false);
+        i++;
+      }
+      else i++;
+    }
+    node.filter(function(d){ return d.id == findNodeIndex(id)})
+      .classed("hidden", false);
+    update();
+  }
 
+   // Add and remove elements on the graph object
+  function addNode(id) {
+      node.push({"id":id});
+      update();
+  }
+
+  function removeNode(id) {
+      var i = 0;
+      var n = findNode(id);
+      while (i < link.length) {
+          if ((link[i]['source'] == n)||(link[i]['target'] == n)) link.splice(i,1);
+          else i++;
+      }
+      node.splice(findNodeIndex(id),1);
+      update();
+  }
+
+  function addLink(source, target) {
+      link.push({"source":findNode(source),"target":findNode(target)});
+      update();
+  }
+
+  function findNode(id) {
+      for (var i in node) {if (node[i]["id"] === id) return node[i]};
+  }
+
+  function findNodeIndex(id) {
+      for (var i in node) {if (node[i]["id"] === id) return i};
+  }
+
+
+  function update() {
+    link.enter().append("line")
+        .attr("class", "link");
+
+    link.exit().remove();
+
+    node.enter().append("circle")
+        .attr("class", "node")
+        .attr("r", 4);
+
+    node.append("title")
+      .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
+
+    node.exit().remove();
+    
+    force.on("tick", function() {
+      link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+      
+      node.attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
+    });
+    
+    node_controls();
+
+    // Restart the force layout.
+    force.start();
+  }
 }
 
 </script>
