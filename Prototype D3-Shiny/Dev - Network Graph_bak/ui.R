@@ -16,7 +16,7 @@ shinyUI(pageWithSidebar(
   ),
   
   mainPanel(
-    includeHTML("scripts/graph_2.js"),
+    includeHTML("scripts/graph.js"),
     dynGraph(inputoutputId = 'd3io')
   )
 ))
