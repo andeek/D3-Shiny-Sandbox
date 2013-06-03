@@ -48,7 +48,8 @@ function wrapper(el, data) {
       h = 400,
       root,
       node,
-      link;
+      link,
+      nodes_hier;
 
   var force = d3.layout.force()
       .on("tick", tick)
@@ -68,14 +69,17 @@ function wrapper(el, data) {
   dataset = root;
   
   //setup each nodes with count 1 and store "group" value to be changed later
-  root.nodes.forEach(function(d) { d.count = 1; d.group = d.v_value});
-    
+  root.nodes.forEach(function(d) { d.count = 1; d.group = d.v_value; d.index = d.v_id});
+  
+  //create record of nodes in group
+  nodes_hier = d3.nest()
+      .key(function(e) { return e.group; }).sortKeys(d3.ascending)       
+      .entries(root.nodes);  
   update();
     
   function update() {    
     var dataset_condense = condense(root)
-    console.log(dataset_condense.nodes);
-    console.log(dataset_condense.nodes.length);
+    
     var nodes = dataset_condense.nodes,
         links = dataset_condense.links;
     
@@ -138,7 +142,53 @@ function wrapper(el, data) {
   // Toggle children on click.
   function click(d) {
     toggle(d);
+    toggle_group(d); 
     update();
+  }
+  
+  function toggle_group(d) {
+    if(d.count > 1) {
+      //if node count > 1, set all nodes in group clicked to own group
+      root.nodes.forEach(function(e) {
+        if(d.rollednodes.indexOf(e.id) > -1) {
+          e.group = e.id;
+        }
+      });
+    }
+    else {
+      //if node count = 1, set all nodes in that original group to have group
+       var root_n = root.nodes.filter(function(v) { return v.group == d.group;});
+      
+      var group = -1,
+          ids = [];
+      
+      //grab the group
+      nodes_hier.forEach(function(e) {
+        //traverse groups
+        e.forEach(function(f) {
+          //traverse nodes within groups
+          if(f.id == d.id) {
+            group = e.key;
+          }
+        });      
+      });
+      
+      //grab the node ids in the group
+      nodes_hier.forEach(function(e){
+        if(e.key == group) {
+          e.values.forEach(function(f){
+            ids.push(f.id);
+          });  
+        }
+      });
+      
+      //store group for each element
+      root.nodes.forEach(function(e){
+        if(ids.indexOf(e.id) > -1) {
+          e.group = group;
+        }
+      });
+    }
   }
   
   function toggle(d) {
@@ -155,49 +205,34 @@ function wrapper(el, data) {
     var nodes = [],
         links = [],
         i = 0;
-        
+          
     //first group all the necessary nodes, then worry about links
-    var nodes_indx = 0;
     root.nodes.forEach(function(d) {      
-      var test = 0;
-      nodes.forEach(function(g) { if(d.v_id == g.id) test+=1; });
-      if(test == 0) {        
-        if(d._count) {
-          nodes.push({id: d.id, index: nodes_indx, _count: d._count});
-          nodes_indx += 1;
-        } else {
-          //if count not _count, condense if possible
-          //need to grab all nodes with same group as d
-          var root_n = root.nodes.filter(function(v) { return v.group == d.group;});  
+      if(d.count) {
+        //if count not _count = 1, group
+        
+        //need to grab all nodes with same group as d
+        var root_n = root.nodes.filter(function(v) { return v.group == d.group;});  
+        
+        //avoid duplicates
+        root_n.forEach(function(e) { toggle(e); });
           
-          //avoid duplicates
-          //root_n.forEach(function(e) { toggle(e); });
-            
-          //create hierarchy on group
-          var nodes_hier = d3.nest()
-            .key(function(e) { return e.group; }).sortKeys(d3.ascending)
-            .entries(root_n);
-          
-          //create rollup of count on group
-          var nodes_hier_count = d3.nest()
-            .key(function(e) { return e.group; }).sortKeys(d3.ascending)
-            .rollup(function(e) { return e.length; })
-            .entries(root_n);
-  
-          nodes_hier_count.forEach( function(e) {
-            test = 0;
-            nodes.forEach(function(g) { if(e.key == g.id) test+=1; });
-            if(test == 0) { 
-              nodes.push({id: e.key, index: nodes_indx, count: e.values}); 
-              nodes_indx += 1; 
-            }
-          });
-        }
-      }      
-      //set all to _count
-      nodes.forEach(function(e) { if(e.count) {e._count = e.count; e.count = null;} });
+        //create rollup of count on group
+        var temp = [];
+        var nodes_hier_count = d3.nest()
+          .key(function(e) { return e.group; }).sortKeys(d3.ascending)
+          .rollup(function(e) {
+            e.forEach(function(a){ temp.push(a.id);});
+            return {length: e.length, nodes: temp}; 
+          })          
+          .entries(root_n);
+        nodes_hier_count.forEach( function(e) {                
+          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: "Group "+e.key, rollednodes: e.values.nodes});                        
+        });
+      }
+       
     });
-    
+    console.log(nodes);
     var root_e = root.edges;
 
     root_e.forEach(function(f) {
@@ -229,24 +264,8 @@ function wrapper(el, data) {
       })
     }); 
 
-    console.log(nodes);
-    console.log(links);
     
     return {nodes: nodes, links: links};
-  }
-  
-  // Returns a list of all nodes under the root.
-  function flatten(root) {
-    var nodes = [], i = 0;
-  
-    function recurse(node) {
-      if (node.count) node.count.forEach(recurse);
-      if (!node.id) node.id = ++i;
-      nodes.push(node);
-    }
-  
-    recurse(root);
-    return nodes;
   }
   
 }
