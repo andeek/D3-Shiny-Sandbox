@@ -247,7 +247,7 @@ function force_wrapper(el, data) {
       .attr("cy", function(d) { return d.y; });
     });
     
-    node_controls();        
+    node_controls();     
   }
   
   function node_controls() {
