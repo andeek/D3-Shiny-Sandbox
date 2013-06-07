@@ -1,20 +1,30 @@
 <style type="text/css"> 
-  circle.node {
-    cursor: pointer;
-    stroke: #3182bd;
-      stroke-width: 1.5px;
-  }
+circle.node {
+  cursor: pointer;
+  stroke: #3182bd;
+  stroke-width: 1.5px;
+}
 
 line.link {
   fill: none;
   stroke: #9ecae1;
-    stroke-width: 1.5px;
+  stroke-width: 1.5px;
+}
+
+circle.node.selected {
+  stroke: red;
+}
+
+.brush .extent {
+  fill-opacity: .1;
+  stroke: #fff;
+  shape-rendering: crispEdges;
 }
 </style>
   <script src="http://d3js.org/d3.v3.js"></script>
   <script type="text/javascript">
   
-  var dataset;
+var dataset_condense;
 var group_indx = 0;
 
 var outputBinding = new Shiny.OutputBinding();
@@ -33,7 +43,7 @@ $.extend(inputBinding, {
     return $(scope).find('.d3graph');
   },
   getValue: function(el) {
-    return dataset;
+    return dataset_condense;
   },
   subscribe: function(el, callback) {
     $(el).on("change.inputBinding", function(e) {
@@ -49,8 +59,10 @@ function wrapper(el, data) {
       root,
       node,
       link,
-      nodes_hier;
-  
+      brush,
+      nodes_hier,
+      shiftkey = false;
+ 
   var force = d3.layout.force()
     .on("tick", tick)
     .linkDistance(30)
@@ -59,16 +71,42 @@ function wrapper(el, data) {
   
   d3.select(el).select("svg").remove();
   var svg = d3.select(el)
+    .attr("tabindex", 1)
+    .on("keydown.brush", keydown)
+    .on("keyup.brush", keyup)
+    .each(function() { this.focus(); })
     .append("svg")
     .attr("width", w)
     .attr("height", h);
   
+    // Add brushing functionality.
+    brush = svg.append("g")
+      .datum(function() { return {selected: false, previouslySelected: false}; })
+      .attr("class", "brush")
+      .call(d3.svg.brush()
+      .x(d3.scale.identity().domain([0, w]))
+      .y(d3.scale.identity().domain([0, h]))
+      .on("brushstart", function(d) {
+        node.each(function(d) { d.previouslySelected = shiftKey && d.selected; });
+      })
+      .on("brush", function() {
+        var extent = d3.event.target.extent();
+        node.classed("selected", function(d) {
+          return d.selected = d.previouslySelected ^
+              (extent[0][0] <= d.x && d.x < extent[1][0]
+              && extent[0][1] <= d.y && d.y < extent[1][1]);
+        });
+      })
+      .on("brushend", function() {
+        d3.event.target.clear();
+        d3.select(this).call(d3.event.target);
+        $(".d3graph").trigger("change");
+      }));  
+  
   root = JSON.parse(data.data_json);
-  //create copy of original data just in case?
-  dataset = root;
   
   //setup each nodes with count 1 and store "group" value to be changed later
-  root.nodes.forEach(function(d) { d.count = 1; d.group = d.v_value; d.index = d.v_id});
+  root.nodes.forEach(function(d) { d.count = 1; d.group = d.v_value; d.index = d.v_id; d.selected=0;});
   
   //create record of nodes in group
   nodes_hier = d3.nest()
@@ -78,14 +116,11 @@ function wrapper(el, data) {
   update();
   
   function update() {    
-    var dataset_condense = condense(root);
+    dataset_condense = condense(root);
     
     var nodes = dataset_condense.nodes,
         links = dataset_condense.links;
-    
-    
-    console.log(links);
-    console.log(nodes);
+
     // Restart the force layout.
     force
       .nodes(nodes)
@@ -106,7 +141,7 @@ function wrapper(el, data) {
     
     // Exit any old links.
     link.exit().remove();
-        
+    
     // Update the nodes…
     node = svg.selectAll("circle.node")
       .data(nodes, function(d){ return d.id; })
@@ -122,15 +157,14 @@ function wrapper(el, data) {
       .on("click", click)
       .call(force.drag);
     
-    node.append("title")
-      .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
-    
     // Exit any old nodes.
     node.exit().remove();
     
-    console.log(link);
-    console.log(node);
+    node.append("title")
+      .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
     
+    $(".d3graph").trigger("change");
+    console.log(dataset_condense);
   }
   
   function tick() {
@@ -219,8 +253,7 @@ function wrapper(el, data) {
   }
   
   function condense(root) {
-    var tempy = [],
-        nodes = [],
+    var nodes = [],
         links = [];
     
     //first group all the necessary nodes, then worry about links
@@ -246,12 +279,11 @@ function wrapper(el, data) {
         
         nodes_hier_count.forEach( function(e) { 
           var label = (e.values.length == 1) ? d.v_label : "Group "+e.key;
-          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes});                        
+          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, selected: 0});                        
         });
       }
       
     });
-    
     var root_e = root.edges;
     
     root_e.forEach(function(f) {
@@ -280,12 +312,18 @@ function wrapper(el, data) {
           var s = nodes.filter(function(v) { return v.id == e.key;})[0].index.toString(),
           t = nodes.filter(function(v) { return v.id == f.key;})[0].index.toString();
           links.push({source: parseInt(s), target: parseInt(t)});
-          tempy.push({source: parseInt(s), target: parseInt(t)});
         }        
       })
     });
-    console.log(tempy);
-    return {links: links, nodes: nodes};
+    return {nodes: nodes, links: links};
+  }
+  
+  function keydown() {
+    shiftKey = d3.event.shiftKey;
+  }
+  
+  function keyup() {
+    shiftKey = d3.event.shiftKey;
   }
   
 }
