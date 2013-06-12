@@ -61,7 +61,7 @@ function wrapper(el, data) {
       link,
       brush,
       //nodes_hier,
-      shiftkey = false;
+      shiftkey;
  
   var force = d3.layout.force()
     .on("tick", tick)
