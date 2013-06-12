@@ -95,27 +95,31 @@ function wrapper(el, data) {
           return d.selected = d.previouslySelected ^
               (extent[0][0] <= d.x && d.x < extent[1][0]
               && extent[0][1] <= d.y && d.y < extent[1][1]);
-        });
+        });        
       })
       .on("brushend", function() {
         d3.event.target.clear();
         d3.select(this).call(d3.event.target);
+        console.log(root.nodes);
         $(".d3graph").trigger("change");
       }));  
   
   root = JSON.parse(data.data_json);
   
   //setup each nodes with count 1 and store "group" value to be changed later
-  root.nodes.forEach(function(d) { d.count = 1; d.group = d.v_value; d.index = d.v_id; d.selected=0;});
+  root.nodes.forEach(function(d) { d.count = 1; d.group = d.id; d.index = d.v_id; d.selected=0;});
   
   //create record of nodes in group
+  //is this necessary? maybe need to move to the place we create the groups
   nodes_hier = d3.nest()
     .key(function(e) { return e.group; }).sortKeys(d3.ascending)       
     .entries(root.nodes);
   
   update();
   
-  function update() {    
+  function update() {
+    if(node && node.length > 0) {group(root);}
+    console.log(root.nodes);
     dataset_condense = condense(root);
     
     var nodes = dataset_condense.nodes,
@@ -145,8 +149,8 @@ function wrapper(el, data) {
     // Update the nodes…
     node = svg.selectAll("circle.node")
       .data(nodes, function(d){ return d.id; })
-      .style("fill", color);
-    
+      .style("fill", color)
+      
     // Enter any new nodes.
     node.enter().append("circle")
       .attr("class", "node")
@@ -155,16 +159,14 @@ function wrapper(el, data) {
       .attr("r", function(d) { return d._count; })
       .style("fill", color)
       .on("click", click)
-      .call(force.drag);
+      .call(force.drag)
+      .append("title")
+      .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
     
     // Exit any old nodes.
     node.exit().remove();
-    
-    node.append("title")
-      .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
-    
-    $(".d3graph").trigger("change");
-    console.log(dataset_condense);
+
+
   }
   
   function tick() {
@@ -252,6 +254,19 @@ function wrapper(el, data) {
     }
   }
   
+  function group(root) {
+    var selected = node.filter(function(d) { return d.selected == 1; });
+    console.log(selected);
+    selected.each(function(d){
+      console.log(d.id);
+      root.nodes.forEach(function(e){
+        if(e.id == d.id) e.group = group_indx;
+      })
+    })     
+    
+    group_indx += 1;
+  }
+  
   function condense(root) {
     var nodes = [],
         links = [];
@@ -278,13 +293,14 @@ function wrapper(el, data) {
         .entries(root_n);
         
         nodes_hier_count.forEach( function(e) { 
-          var label = (e.values.length == 1) ? d.v_label : "Group "+e.key;
+          var label = (e.values.length == 1) ? d.v_label : "Group "+e.key;0
           nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, selected: 0});                        
         });
       }
       
     });
     var root_e = root.edges;
+    
     
     root_e.forEach(function(f) {
       f.source_grp = root.nodes[f.source].group;

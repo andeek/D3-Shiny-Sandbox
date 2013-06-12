@@ -54,11 +54,16 @@ shinyServer(function(input, output) {
       if("selected" %in% names(nodes)) { 
         nodes_selected<-subset(nodes, selected == 1)$id
         edges<-ldply(input[[names(input)[names(input) == "d3io"]]]["links"][[1]], data.frame)
-        edges_selected<-subset(edges, source.selected == 1 | target.selected == 1)
-        within_selected<-subset(edges_selected, source.id %in% nodes_selected & target.id %in% nodes_selected)
-        
-        n_total_selected<-nrow(edges_selected)
-        n_within_selected<-nrow(within_selected)
+        if(nrow(edges) > 0) {
+          edges_selected<-subset(edges, source.selected == 1 | target.selected == 1)
+          within_selected<-subset(edges_selected, source.id %in% nodes_selected & target.id %in% nodes_selected)
+          n_total_selected<-nrow(edges_selected)
+          n_within_selected<-nrow(within_selected)
+        } else {
+          n_total_selected<-0
+          n_within_selected<-0
+        }
+
         
         return(data.frame(Within=n_within_selected, Outside=n_total_selected - n_within_selected, row.names="Connections"))
       } else {
