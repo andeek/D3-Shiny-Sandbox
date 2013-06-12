@@ -60,7 +60,7 @@ function wrapper(el, data) {
       node,
       link,
       brush,
-      nodes_hier,
+      //nodes_hier,
       shiftkey = false;
  
   var force = d3.layout.force()
@@ -100,7 +100,6 @@ function wrapper(el, data) {
       .on("brushend", function() {
         d3.event.target.clear();
         d3.select(this).call(d3.event.target);
-        console.log(root.nodes);
         $(".d3graph").trigger("change");
       }));  
   
@@ -111,15 +110,14 @@ function wrapper(el, data) {
   
   //create record of nodes in group
   //is this necessary? maybe need to move to the place we create the groups
-  nodes_hier = d3.nest()
+  /*nodes_hier = d3.nest()
     .key(function(e) { return e.group; }).sortKeys(d3.ascending)       
-    .entries(root.nodes);
+    .entries(root.nodes);*/
   
   update();
   
   function update() {
     if(node && node.length > 0) {group(root);}
-    console.log(root.nodes);
     dataset_condense = condense(root);
     
     var nodes = dataset_condense.nodes,
@@ -166,7 +164,7 @@ function wrapper(el, data) {
     // Exit any old nodes.
     node.exit().remove();
 
-
+    $(".d3graph").trigger("change");
   }
   
   function tick() {
@@ -208,7 +206,7 @@ function wrapper(el, data) {
         }
       });
     }
-    else {
+    /*else {
       //if node count = 1, set all nodes in that original group to have group
       var root_n = root.nodes.filter(function(v) { return v.group == d.group;});
       
@@ -241,7 +239,7 @@ function wrapper(el, data) {
           e.group = group;
         }
       });
-    }
+    }*/
   }
   
   function toggle(d) {
@@ -256,13 +254,12 @@ function wrapper(el, data) {
   
   function group(root) {
     var selected = node.filter(function(d) { return d.selected == 1; });
-    console.log(selected);
+
     selected.each(function(d){
-      console.log(d.id);
       root.nodes.forEach(function(e){
         if(e.id == d.id) e.group = group_indx;
       })
-    })     
+    });     
     
     group_indx += 1;
   }

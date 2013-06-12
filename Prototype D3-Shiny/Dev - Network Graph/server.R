@@ -49,14 +49,19 @@ shinyServer(function(input, output) {
   
   datasetInput <- reactive({
     empty<-data.frame(Within=0, Outside=0, row.names="Connections")
+    
     if(names(input)[1] == "d3io") {
-      nodes<-ldply(input[[names(input)[names(input) == "d3io"]]]["nodes"][[1]], data.frame)
+      nodes<-ldply(input[[names(input)[names(input) == "d3io"]]]["nodes"][[1]], function(x) data.frame(x[c("_count","group","id","index","selected","weight")]))
+      nodes_t<-input[[names(input)[names(input) == "d3io"]]]["nodes"][[1]]
+      edges_t<-input[[names(input)[names(input) == "d3io"]]]["links"][[1]]
+      save(nodes_t, edges_t, file="data/input.RData")
       if("selected" %in% names(nodes)) { 
-        nodes_selected<-subset(nodes, selected == 1)$id
-        edges<-ldply(input[[names(input)[names(input) == "d3io"]]]["links"][[1]], data.frame)
+        nodes_selected<-as.character(subset(nodes, selected == 1)$id)
+        edges<-ldply(input[[names(input)[names(input) == "d3io"]]]["links"][[1]], function(x) data.frame(c(x[["source"]][c("id", "selected")], x[["target"]][c("id", "selected")])))
+        names(edges) <- c("source.id", "source.selected", "target.id", "target.selected")
         if(nrow(edges) > 0) {
           edges_selected<-subset(edges, source.selected == 1 | target.selected == 1)
-          within_selected<-subset(edges_selected, source.id %in% nodes_selected & target.id %in% nodes_selected)
+          within_selected<-subset(edges_selected, as.character(source.id) %in% nodes_selected & as.character(target.id) %in% nodes_selected)
           n_total_selected<-nrow(edges_selected)
           n_within_selected<-nrow(within_selected)
         } else {
