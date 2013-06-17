@@ -1,0 +1,41 @@
+countries to countries (current active routes)
+table (csv)
+[ country departure name | country arrival name | number of routes ]
+aprox. dimensions 3x4600
+countriesToCountries.csv
+
+
+countries to countries (current active routes)
+network (gml)
+~230 nodes, 4600 edges
+countriesNetwork.gml
+
+
+
+cities to cities (current active routes)
+table (csv)
+[ city departure name | country departure name |  long. departure  (decimal) | lat. departure  (decimal) | city arrival name | country arrival name | long. arrival (decimal) | lat. arrival  (decimal) | number of routes | distances (km.) ]
+aprox. dimensions 5x30000
+citiesToCities.csv
+
+
+all routes (current active routes)
+table (csv)æ
+[ airport departure | city departure | country departure | long. departure  (decimal) | lat. departure  (decimal) | airport arrival | city arrival | long. arrival (decimal) | lat. arrival  (decimal) | airline name | airline country based | route ID | number of stops | distances (km.) | domestic ]
+aprox. dimensions 12x58000
+completeTable.csv
+
+
+
+cities (current active routes)
+table (csv)
+[ city name | country name | most active airport | long. airport | lat. airport | number of routes | number of incoming flights | number of outcoming flights | number of incoming domestic | number of outcoming domestic | number of incoming international | number of outcoming international | average distance (km.) | max distance (km.) ]
+aprox. dimensions 14x3000
+citiesTable.csv
+
+
+cities to cities in time (1990-2010)
+table (csv)
+[ departure city name | arriving city name | number passengers 1990 | number passengers 1995 | number passengers 2000 | number passengers 2005 | number passengers 2010 ]
+aprox. dimensions 7x12000
+citiesToCitiesPass.csv
