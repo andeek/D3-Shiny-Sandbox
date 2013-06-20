@@ -8,6 +8,11 @@
   stroke: red;
 }
 
+.hidden {
+  stroke-width: 0px;
+  opacity: 0;
+}
+
 .link {
   stroke: #999;
 }
@@ -33,13 +38,15 @@
 <script type="text/javascript">
 
 var dataset;
+var group_indx = 0;
+
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
   find: function(scope) {
     return $(scope).find('.d3graph');
   },
   renderValue: function(el, data) {  
-	  force_wrapper(el, data);
+	  wrapper(el, data);
 }});
 Shiny.outputBindings.register(outputBinding);
 
@@ -59,242 +66,112 @@ $.extend(inputBinding, {
 });
 Shiny.inputBindings.register(inputBinding);
 
-function force_wrapper(el, data) {
-  //remove the old graph
-  //var svg = d3.select(el).select("svg");      
-  //svg.remove();
-  
-	$(el).html("");
-	
-	var w= 550,
-		  h = 400,
-      shiftKey;        
-    
-	var layout = data.layout;
-  
-  dataset = JSON.parse(data.data_json)
-  
-  var svg = d3.select(el)
-    .attr("tabindex", 1)
-    .on("keydown.brush", keydown)
-    .on("keyup.brush", keyup)
-    .each(function() { this.focus(); })
-    .append("svg")
-  	  .attr("width", w)
-		  .attr("height", h);
-      //.attr("style", "float: left;");
-  
-  var node, link, brush, force;
-  
-  var btn_div  = d3.select(el).append("div")
-    .attr("class", "button container");
-  
-  var btn_clear = btn_div
-    .append("input")
-      .attr("class", "button control")
-      .attr("name", "btn_clear")
-      .attr("type", "button")
-      .attr("style", "background-image: url(images/clear.png);")        
-      .on("click", function(){
-        node.classed("selected", false);
-        dataset.nodes.forEach(function(d) {d.selected = 0;});
-        $(".d3graph").trigger("change");
-      }); 
-    
-  var btn_reset = btn_div
-    .append("input")
-      .attr("class", "button control")
-      .attr("name", "btn_reset")
-      .attr("type", "button")
-      .attr("style", "background-image: url(images/reset.png);")
-      .on("click", function(){ 
-        svg.selectAll(".node").remove();
-        svg.selectAll(".link").remove();
-        svg.selectAll(".brush").remove();
-        
-        dataset.nodes.forEach(function(d) {
-          d.fixed = false;
-          d.selected = 0;
-        });
-        
-        init_drawGraph();
-        //$(".d3graph").trigger("change");
-      }); 
-  
-  var btn_layout = btn_div
-    .append("input")
-      .attr("class", "button control")
-      .attr("name", "btn_layout")
-      .attr("type", "button")
-      .attr("style", "background-image: url(images/layout.png);")        
-      .on("click", function(){  
-        redrawGraph();
-        //$(".d3graph").trigger("change");
-      });      
-  
-  init_drawGraph(dataset, layout);
-  
-  function init_drawGraph() {        
-    switch(layout)
-    {
-      case "force":
-        init_forceLayout();
-        $(".d3graph").trigger("change");
-        break;
-      default:
-        break;        
-    }        
-  }  
-  
-  function redrawGraph() {        
-    switch(layout)
-    {
-      case "force":
-        forceLayout();
-        $(".d3graph").trigger("change");
-        break;
-      default:
-        break;        
-    }        
-  }
-  
-  function forceLayout() {
-    
-    dataset.nodes.forEach(function(d) {
-        if(d.selected == 1) {
-          d.fixed = true;
-          d.x = d.x;
-          d.y = d.y;
-          d.px = d.x;
-          d.py = d.y; 
-        }          
-      });
-    
-    force
-      .nodes(dataset.nodes)
-      .links(dataset.edges)
-      .start();
-  
-  
-    force.on("tick", function() {
-      link.attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
-      
-      node.attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; });
-    });
-  
-  }
-  
-  function init_forceLayout() {
-  
-    force = d3.layout.force()
-      .charge(-120)
-      .linkDistance(30)
+function wrapper(el, data) {
+  var w = 550,
+      h = 400,
+      node,
+      link,
+      root;
+
+  var force = d3.layout.force()
+      .on("tick", tick)
       .size([w, h]);
-      
+
+  var svg = d3.select(el).append("svg")
+      .attr("width", w)
+      .attr("height", h);
+
+  d3.json(data.data_json, function(json) {
+    root = json;
+    update();
+  });
+  
+  function update() {
+    var nodes = flatten(root),
+        links = d3.layout.tree().links(nodes);
+  
+    // Restart the force layout.
     force
-      .nodes(dataset.nodes)
-      .links(dataset.edges)
-      .start();
+        .nodes(nodes)
+        .links(links)
+        .start();
   
-    link = svg.append("g").attr("class", "link").selectAll("line.link")
-      .data(dataset.edges).enter()
-      .append("line")
-      .attr("class", "link");
-    
-    brush = svg.append("g")
-      .datum(function() { return {selected: false, previouslySelected: false}; })
-      .attr("class", "brush")
-      .call(d3.svg.brush()
-      .x(d3.scale.identity().domain([0, w]))
-      .y(d3.scale.identity().domain([0, h]))
-      .on("brushstart", function(d) {
-        node.each(function(d) { d.previouslySelected = shiftKey && d.selected; });
-      })
-      .on("brush", function() {
-        var extent = d3.event.target.extent();
-        node.classed("selected", function(d) {
-          return d.selected = d.previouslySelected ^
-              (extent[0][0] <= d.x && d.x < extent[1][0]
-              && extent[0][1] <= d.y && d.y < extent[1][1]);
-        });
-      })
-      .on("brushend", function() {
-        d3.event.target.clear();
-        d3.select(this).call(d3.event.target);
-        $(".d3graph").trigger("change");
-      }));
-    
-    node = svg.append("g").attr("class", "node").selectAll("circle.node")
-      .data(dataset.nodes).enter()
-      .append("circle")
-      .attr("class","node")
-      .attr("r", 4);
-      
-    node.append("title")
-      .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
+    // Update the links…
+    link = svg.selectAll("line.link")
+        .data(links, function(d) { return d.target.id; });
   
-    force.on("tick", function() {
-      link.attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
-      
-      node.attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; });
-    });
-    
-    node_controls();     
-  }
-  
-  function node_controls() {
-    node.on("mousedown", function(d) {
-      if (!d.selected) { // Don't deselect on shift-drag.
-        if (!shiftKey) node.classed("selected", function(p) { return p.selected = d === p; });
-        else d3.select(this).classed("selected", d.selected = true);
-      }
-    })
-    .on("mouseup", function(d) {
-      if (d.selected && shiftKey) d3.select(this).classed("selected", d.selected = false);
-    })
-    .call(d3.behavior.drag()
-      .on("drag", function(d) { nudge(d3.event.dx, d3.event.dy); }));
-    
-  }    
-  
-  function nudge(dx, dy) {
-    node.filter(function(d) { return d.selected; })
-        .attr("cx", function(d) { return d.x += dx; })
-        .attr("cy", function(d) { return d.y += dy; })
-  
-    link.filter(function(d) { return d.source.selected; })
+    // Enter any new links.
+    link.enter().insert("line", ".node")
+        .attr("class", "link")
         .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; });
-  
-    link.filter(function(d) { return d.target.selected; })
+        .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
-    
-    //d3.event.preventDefault();
+  
+    // Exit any old links.
+    link.exit().remove();
+  
+    // Update the nodes…
+    node = svg.selectAll("circle.node")
+        .data(nodes, function(d) { return d.id; })
+        .style("fill", color);
+  
+    // Enter any new nodes.
+    node.enter().append("circle")
+        .attr("class", "node")
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; })
+        .attr("r", function(d) { return Math.sqrt(d.size) / 10 || 4.5; })
+        .style("fill", color)
+        .on("click", click)
+        .call(force.drag);
+  
+    // Exit any old nodes.
+    node.exit().remove();
   }
   
-  function keydown() {
-    if (!d3.event.metaKey) switch (d3.event.keyCode) {
-      case 38: nudge( 0, -1); break; // UP
-      case 40: nudge( 0, +1); break; // DOWN
-      case 37: nudge(-1,  0); break; // LEFT
-      case 39: nudge(+1,  0); break; // RIGHT
+  function tick() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+  
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+  }
+  
+  // Color leaf nodes orange, and packages white or blue.
+  function color(d) {
+    return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
+  }
+  
+  // Toggle children on click.
+  function click(d) {
+    if (d.children) {
+      d._children = d.children;
+      d.children = null;
+    } else {
+      d.children = d._children;
+      d._children = null;
     }
-    shiftKey = d3.event.shiftKey;
+    update();
   }
   
-  function keyup() {
-    shiftKey = d3.event.shiftKey;
+  // Returns a list of all nodes under the root.
+  function flatten(root) {
+    var nodes = [], i = 0;
+  
+    function recurse(node) {
+      if (node.children) node.children.forEach(recurse);
+      if (!node.id) node.id = ++i;
+      nodes.push(node);
+    }
+  
+    recurse(root);
+    return nodes;
   }
 
+  
+  
 }
-
 </script>
