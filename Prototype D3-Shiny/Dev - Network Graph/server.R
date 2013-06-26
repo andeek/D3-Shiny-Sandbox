@@ -44,7 +44,7 @@ shinyServer(function(input, output) {
     supported_formats<-c("gml")
     if(tolower(strsplit(input$dataset, "\\.")[[1]][2]) %in% supported_formats) {
       #return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), layout=input$layout))
-      return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset))))
+      return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), index = 0))
     } else {
       return()  
     }
@@ -103,7 +103,7 @@ shinyServer(function(input, output) {
     }
     
     for(g in as.character(unique(empty$Group))) {
-      html<-paste(html,"<h3>Group ", g, "</h3><div><ul>", sep="")
+      html<-paste(html,"<h3>Group ", g, " (", nrow(subset(empty, as.character(Group) == g)), ")", "</h3><div><ul>", sep="")
       for(n in as.character(subset(empty, as.character(Group) == g)$Node)) {
         html<-paste(html,"<li>", n, "</li>", sep="")
       }

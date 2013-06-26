@@ -12,7 +12,7 @@ line.link {
 }
 
 circle.node.selected {
-  stroke: red;
+  stroke: red !important;
 }
 
 .brush .extent {
@@ -32,7 +32,7 @@ circle.node.selected {
 <script type="text/javascript">
   
 var dataset_condense;
-var group_indx = 0;
+var group_indx;
 
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
@@ -114,16 +114,18 @@ function wrapper(el, data) {
     }));  
   
   if(data) {
+    group_indx = data.index;
+    
     root = JSON.parse(data.data_json);
   
-  var scale_x = d3.scale.linear()
-    .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_x)}))
-    .range([0, w]);
-  
-  var scale_y = d3.scale.linear()
-    .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_y)}))
-    .range([h,0]);
-  
+    var scale_x = d3.scale.linear()
+      .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_x)}))
+      .range([0, w]);
+    
+    var scale_y = d3.scale.linear()
+      .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_y)}))
+      .range([h,0]);
+    
     //setup each nodes with count 1 and store "group" value to be changed later
     root.nodes.forEach(function(d) { d.count = 1; d.group = d.id; d.index = d.v_id; d.x = scale_x(parseFloat(d.v_x)); d.y = scale_y(parseFloat(d.v_y)); d.selected=0;});
     
@@ -169,8 +171,9 @@ function wrapper(el, data) {
     node = svg.selectAll("circle.node")
       .data(nodes, function(d){ return d.id; })
       .style("fill", color)
-      .style("stroke", function(d){ if(d.selected == 0 && d._count > 1) return d3.rgb(color(d)).darker().toString();});
-  
+      .style("stroke", function(d){ 
+        if(d.selected == 0 && d._count > 1) return d3.rgb(color(d)).darker().toString();        
+      });
     
     // Enter any new nodes.
     node.enter().append("circle")
