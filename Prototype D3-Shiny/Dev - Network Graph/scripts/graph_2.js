@@ -61,8 +61,8 @@ $.extend(inputBinding, {
 Shiny.inputBindings.register(inputBinding);
 
 function wrapper(el, data) {  
-  var w = 550,
-      h = 400,
+  var w = $('svg').parent().width(),
+      h = $(window).height() - $('.span12').height() - 50 - $('.nav-tabs').height(),
       r = 6,
       root,
       node,
@@ -187,20 +187,40 @@ function wrapper(el, data) {
     
     // Exit any old nodes.
     node.exit().remove();
-
+    
+    root.nodes.forEach(function(d){
+      node.each(function(f){
+        console.log(d);
+        console.log(f[0]);
+        if(d.id == f.id) {
+          console.log(d.x + "," + f.x);
+          d.x = f.x;
+          d.y = f.y;
+          console.log(d.x + "," + f.x)
+        }
+      })
+    })
+    
     $(".d3graph").trigger("change");
   }
   
   function tick(e) {  
-    node
-      .attr("cx", function(d) { return d.x = Math.max(r, Math.min(w - r, d.x)); })
-      .attr("cy", function(d) { return d.y = Math.max(r, Math.min(h - r, d.y)); });
-        
     link
+      .transition()
+      //.duration(500)
+      .ease("elastic")
       .attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
       .attr("x2", function(d) { return d.target.x; })
       .attr("y2", function(d) { return d.target.y; });
+    
+    node
+      .transition()
+      //.duration(500)
+      .ease("elastic")
+      .attr("cx", function(d) { return d.x = Math.max(r, Math.min(w - r, d.x)); })
+      .attr("cy", function(d) { return d.y = Math.max(r, Math.min(h - r, d.y)); }); 
+
   }
   
   // Color leaf nodes orange, and packages white or blue.
@@ -291,7 +311,7 @@ function wrapper(el, data) {
           var x = (e.values.x & e.values.length == 1) ? parseFloat(e.values.x) : d3.mean(root_n, function(f){ return parseFloat(f.x); });
           var y = (e.values.y & e.values.length == 1) ? parseFloat(e.values.y) : d3.mean(root_n, function(f){ return parseFloat(f.y); });
           
-          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, rollednodes_label: e.values.nodes_label, selected: 0, x: x, y: y});                        
+          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, rollednodes_label: e.values.nodes_label, selected: 0, x: x, y: y, px: x, py: y});                        
         });
         
       }
