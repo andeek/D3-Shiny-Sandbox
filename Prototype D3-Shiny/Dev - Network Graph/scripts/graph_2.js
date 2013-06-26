@@ -188,36 +188,25 @@ function wrapper(el, data) {
     // Exit any old nodes.
     node.exit().remove();
     
-    root.nodes.forEach(function(d){
-      node.each(function(f){
-        console.log(d);
-        console.log(f[0]);
-        if(d.id == f.id) {
-          console.log(d.x + "," + f.x);
-          d.x = f.x;
-          d.y = f.y;
-          console.log(d.x + "," + f.x)
+    var safety = 0;
+    while(force.alpha() > 0.05) { 
+        force.tick();
+        if(safety++ > 5) {
+          break;
         }
-      })
-    })
+    }
     
     $(".d3graph").trigger("change");
   }
   
   function tick(e) {  
     link
-      .transition()
-      //.duration(500)
-      .ease("elastic")
       .attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
       .attr("x2", function(d) { return d.target.x; })
       .attr("y2", function(d) { return d.target.y; });
     
     node
-      .transition()
-      //.duration(500)
-      .ease("elastic")
       .attr("cx", function(d) { return d.x = Math.max(r, Math.min(w - r, d.x)); })
       .attr("cy", function(d) { return d.y = Math.max(r, Math.min(h - r, d.y)); }); 
 
