@@ -116,15 +116,21 @@ function wrapper(el, data) {
   if(data) {
     root = JSON.parse(data.data_json);
   
+  var scale_x = d3.scale.linear()
+    .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_x)}))
+    .range([0, w]);
+  
+  var scale_y = d3.scale.linear()
+    .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_y)}))
+    .range([h,0]);
+  
     //setup each nodes with count 1 and store "group" value to be changed later
-    root.nodes.forEach(function(d) { d.count = 1; d.group = d.id; d.index = d.v_id; d.selected=0;});
-    
+    root.nodes.forEach(function(d) { d.count = 1; d.group = d.id; d.index = d.v_id; d.x = scale_x(parseFloat(d.v_x)); d.y = scale_y(parseFloat(d.v_y)); d.selected=0;});
     
     update();
   }
   
   function update() {
-  
     if(node && node.length > 0) {group(root);}
     dataset_condense = condense(root);
     
@@ -281,8 +287,11 @@ function wrapper(el, data) {
         .entries(root_n);
         
         nodes_hier_count.forEach( function(e) { 
-          var label = (e.values.length == 1) ? d.v_label : "Group "+e.key;0
-          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, rollednodes_label: e.values.nodes_label, selected: 0});                        
+          var label = (e.values.length == 1) ? d.v_label : "Group "+e.key;
+          var x = (e.values.x & e.values.length == 1) ? parseFloat(e.values.x) : d3.mean(root_n, function(f){ return parseFloat(f.x); });
+          var y = (e.values.y & e.values.length == 1) ? parseFloat(e.values.y) : d3.mean(root_n, function(f){ return parseFloat(f.y); });
+          
+          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, rollednodes_label: e.values.nodes_label, selected: 0, x: x, y: y});                        
         });
         
       }

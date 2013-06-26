@@ -15,6 +15,9 @@ data_sets <- paste("data/", list.files("data/", pattern="*.gml"), sep="")
 getXMLfromFile <- function(file) {
   require(igraph)
   graph<-read.graph(file, format="gml")
+  layout <- layout.auto(graph)
+  V(graph)$x <- layout[,1]
+  V(graph)$y <- layout[,2]
   write.graph(graph, paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""), format="graphml")
   return(paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""))
 }
