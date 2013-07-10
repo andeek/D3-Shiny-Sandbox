@@ -133,7 +133,8 @@ function wrapper(el, data) {
   }
   
   function update() {
-    if(node && node.length > 0) {group(root);}
+    
+    if(node && node.length > 0) { group(root); }
     dataset_condense = condense(root);
     
     var nodes = dataset_condense.nodes,
@@ -183,7 +184,12 @@ function wrapper(el, data) {
       .attr("r", function(d) { return d._count; })
       .style("fill", color)
       .style("stroke", function(d){ if(d.selected == 0 && d._count > 1) return d3.rgb(color(d)).darker().toString();} )
-      .on("click", click)
+      .on('touchstart', function(d) {
+        d3.event.preventDefault(); // no scrolling
+      })
+      .on("click", function(d) {
+        if(!d3.event.defaultPrevented) {click(d);}
+      })
       .call(force.drag)
       .append("title")
       .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
@@ -199,6 +205,12 @@ function wrapper(el, data) {
         }
     }
     
+    node.each(function(n){
+      var rnf = root.nodes.filter(function(r){ return r.id == n.id; });
+      rnf[0].x = n.x;
+      rnf[0].y = n.y;
+    });
+
     $(".d3graph").trigger("change");
   }
   
@@ -212,7 +224,6 @@ function wrapper(el, data) {
     node
       .attr("cx", function(d) { return d.x = Math.max(r, Math.min(w - r, d.x)); })
       .attr("cy", function(d) { return d.y = Math.max(r, Math.min(h - r, d.y)); }); 
-
   }
   
   // Color leaf nodes orange, and packages white or blue.
