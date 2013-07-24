@@ -12,7 +12,7 @@ line.link {
 }
 
 circle.node.selected {
-  stroke: red !important;
+  stroke: red;
 }
 
 .brush .extent {
@@ -32,7 +32,7 @@ circle.node.selected {
 <script type="text/javascript">
   
 var dataset_condense;
-var group_indx;
+var group_indx = 0;
 
 var outputBinding = new Shiny.OutputBinding();
 $.extend(outputBinding, {
@@ -68,7 +68,7 @@ function wrapper(el, data) {
       node,
       link,
       shiftkey,
-      color_scale = d3.scale.category20();;
+      color_scale = d3.scale.category20();
  
   var force = d3.layout.force()
     .on("tick", tick)
@@ -114,18 +114,16 @@ function wrapper(el, data) {
     }));  
   
   if(data) {
-    group_indx = data.index;
-    
     root = JSON.parse(data.data_json);
   
-    var scale_x = d3.scale.linear()
-      .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_x)}))
-      .range([0, w]);
-    
-    var scale_y = d3.scale.linear()
-      .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_y)}))
-      .range([h,0]);
-    
+  var scale_x = d3.scale.linear()
+    .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_x)}))
+    .range([0, w]);
+  
+  var scale_y = d3.scale.linear()
+    .domain(d3.extent(root.nodes, function(d){return parseFloat(d.v_y)}))
+    .range([h,0]);
+  
     //setup each nodes with count 1 and store "group" value to be changed later
     root.nodes.forEach(function(d) { d.count = 1; d.group = d.id; d.index = d.v_id; d.x = scale_x(parseFloat(d.v_x)); d.y = scale_y(parseFloat(d.v_y)); d.selected=0;});
     
@@ -133,8 +131,7 @@ function wrapper(el, data) {
   }
   
   function update() {
-    
-    if(node && node.length > 0) { group(root); }
+    if(node && node.length > 0) {group(root);}
     dataset_condense = condense(root);
     
     var nodes = dataset_condense.nodes,
@@ -148,7 +145,7 @@ function wrapper(el, data) {
     force
       .nodes(nodes)
       .links(links)
-      .charge(function(d){ return -1*d.weight*d.weight*5; })
+      .charge(function(d){ return -1*d.weight*25; })
       .linkDistance(function(d){ return nodes[d.source.index]._count + nodes[d.target.index]._count + 28;})
       .linkStrength(function(d){ return scale(d.strength)*3; })
       .start()
@@ -172,9 +169,8 @@ function wrapper(el, data) {
     node = svg.selectAll("circle.node")
       .data(nodes, function(d){ return d.id; })
       .style("fill", color)
-      .style("stroke", function(d){ 
-        if(d.selected == 0 && d._count > 1) return d3.rgb(color(d)).darker().toString();        
-      });
+      .style("stroke", function(d){ if(d.selected == 0 && d._count > 1) return d3.rgb(color(d)).darker().toString();});
+  
     
     // Enter any new nodes.
     node.enter().append("circle")
@@ -184,12 +180,7 @@ function wrapper(el, data) {
       .attr("r", function(d) { return d._count; })
       .style("fill", color)
       .style("stroke", function(d){ if(d.selected == 0 && d._count > 1) return d3.rgb(color(d)).darker().toString();} )
-      .on('touchstart', function(d) {
-        d3.event.preventDefault(); // no scrolling
-      })
-      .on("click", function(d) {
-        if(!d3.event.defaultPrevented) {click(d);}
-      })
+      .on("click", click)
       .call(force.drag)
       .append("title")
       .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
@@ -197,26 +188,39 @@ function wrapper(el, data) {
     // Exit any old nodes.
     node.exit().remove();
     
-    var safety = 0;
-    while(force.alpha() > 0.05) { 
-        force.tick();
-        if(safety++ > 5) {
-          break;
+    root.nodes.forEach(function(d){
+      node.each(function(f){
+        console.log(d);
+        console.log(f[0]);
+        if(d.id == f.id) {
+          console.log(d.x + "," + f.x);
+          d.x = f.x;
+          d.y = f.y;
+          console.log(d.x + "," + f.x)
         }
-    }
+      })
+    })
+    
     $(".d3graph").trigger("change");
   }
   
   function tick(e) {  
     link
+      .transition()
+      //.duration(500)
+      .ease("elastic")
       .attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
       .attr("x2", function(d) { return d.target.x; })
       .attr("y2", function(d) { return d.target.y; });
     
     node
+      .transition()
+      //.duration(500)
+      .ease("elastic")
       .attr("cx", function(d) { return d.x = Math.max(r, Math.min(w - r, d.x)); })
       .attr("cy", function(d) { return d.y = Math.max(r, Math.min(h - r, d.y)); }); 
+
   }
   
   // Color leaf nodes orange, and packages white or blue.
@@ -307,24 +311,12 @@ function wrapper(el, data) {
           var x = (e.values.x & e.values.length == 1) ? parseFloat(e.values.x) : d3.mean(root_n, function(f){ return parseFloat(f.x); });
           var y = (e.values.y & e.values.length == 1) ? parseFloat(e.values.y) : d3.mean(root_n, function(f){ return parseFloat(f.y); });
           
-          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, rollednodes_label: e.values.nodes_label, selected: 0, x: x, y: y, px: x, py: y});
-          console.log(x + ", " + y)                        
+          nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, rollednodes_label: e.values.nodes_label, selected: 0, x: x, y: y, px: x, py: y});                        
         });
-        console.log(root_n); 
-        console.log(nodes);
         
       }
       
     });
-    
-    nodes.forEach(function(n){
-      var rnf = root.nodes.filter(function(r){ return r.id == n.id; });
-      if(rnf[0]) {
-		  rnf[0].x = n.x;
-		  rnf[0].y = n.y;
-	  }
-    });
-    
     var root_e = root.edges;
 
     root_e.forEach(function(f) {
