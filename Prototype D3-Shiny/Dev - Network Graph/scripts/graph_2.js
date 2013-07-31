@@ -110,7 +110,6 @@ function wrapper(el, data) {
     .on("brushend", function() {
       d3.event.target.clear();
       d3.select(this).call(d3.event.target);
-      console.log("change brush");
       $(".d3graph").trigger("change");
     }));  
   
@@ -200,13 +199,13 @@ function wrapper(el, data) {
     // Exit any old nodes.
     node.exit().remove();
     
-    //var safety = 0;
-    //while(force.alpha() > 0.05) { 
-    //    force.tick();
-    //    if(safety++ > 5) {
-    //      break;
-    //    }
-    //}
+    var safety = 0;
+    while(force.alpha() > 0.05) { 
+        force.tick();
+        if(safety++ > 5) {
+          break;
+        }
+    }
     
     node.each(function(n){
       var rnf = root.nodes.filter(function(r){ return r.id == n.id; });
@@ -217,7 +216,6 @@ function wrapper(el, data) {
     });
     
     $(".d3graph").trigger("change");
-    console.log("change update");
   }
   
   function tick(e) {  
