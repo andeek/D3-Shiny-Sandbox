@@ -75,7 +75,7 @@ function wrapper(el, data) {
     .linkDistance(30)
     .linkStrength(2)
     .gravity(.2)
-    .friction(.8)
+    .friction(.7)
     .charge(-120)
     .size([w, h]);
   
@@ -110,6 +110,7 @@ function wrapper(el, data) {
     .on("brushend", function() {
       d3.event.target.clear();
       d3.select(this).call(d3.event.target);
+      console.log("change brush");
       $(".d3graph").trigger("change");
     }));  
   
@@ -191,20 +192,32 @@ function wrapper(el, data) {
         if(!d3.event.defaultPrevented) {click(d);}
       })
       .call(force.drag)
-      .append("title")
+      
+      
+    node.append("title")
       .text(function(d) { return (typeof d.v_label === "undefined") ? d.id : d.v_label;});
     
     // Exit any old nodes.
     node.exit().remove();
     
-    var safety = 0;
-    while(force.alpha() > 0.05) { 
-        force.tick();
-        if(safety++ > 5) {
-          break;
-        }
-    }
+    //var safety = 0;
+    //while(force.alpha() > 0.05) { 
+    //    force.tick();
+    //    if(safety++ > 5) {
+    //      break;
+    //    }
+    //}
+    
+    node.each(function(n){
+      var rnf = root.nodes.filter(function(r){ return r.id == n.id; });
+      if(rnf[0]) {
+        rnf[0].x = n.x;
+  		  rnf[0].y = n.y;
+  	  }
+    });
+    
     $(".d3graph").trigger("change");
+    console.log("change update");
   }
   
   function tick(e) {  
@@ -276,7 +289,7 @@ function wrapper(el, data) {
   function condense(root) {
     var nodes = [],
         links = [];
-    
+        
     //first group all the necessary nodes, then worry about links
     root.nodes.forEach(function(d) {      
       if(d.count) {
@@ -308,21 +321,11 @@ function wrapper(el, data) {
           var y = (e.values.y & e.values.length == 1) ? parseFloat(e.values.y) : d3.mean(root_n, function(f){ return parseFloat(f.y); });
           
           nodes.push({_count: e.values.length, group:e.key, id: e.key, index: nodes.length, v_label: label, rollednodes: e.values.nodes, rollednodes_label: e.values.nodes_label, selected: 0, x: x, y: y, px: x, py: y});
-          console.log(x + ", " + y)                        
+                              
         });
-        console.log(root_n); 
-        console.log(nodes);
-        
+                
       }
       
-    });
-    
-    nodes.forEach(function(n){
-      var rnf = root.nodes.filter(function(r){ return r.id == n.id; });
-      if(rnf[0]) {
-		  rnf[0].x = n.x;
-		  rnf[0].y = n.y;
-	  }
     });
     
     var root_e = root.edges;
