@@ -1,6 +1,6 @@
 .libPaths("/home/andeek/R/library")
-addResourcePath('images', '~/ShinyApps/NetworkGraph/images')
-addResourcePath('scripts', '~/ShinyApps/NetworkGraph/scripts')
+addResourcePath('images', '~/ShinyApps/DevNetworkGraph/images')
+addResourcePath('scripts', '~/ShinyApps/DevNetworkGraph/scripts')
 #addResourcePath('data', '~/ShinyApps/DevNetworkGraph/data')
 #addResourcePath('images', '/var/shiny-server/www/D3/Network\ Graph/images') 
 #addResourcePath('images', 'U:/Documents/Projects/Community-Detection/Prototype\ D3-Shiny/Network\ Graph/images')
@@ -15,6 +15,9 @@ data_sets <- paste("data/", list.files("data/", pattern="*.gml"), sep="")
 getXMLfromFile <- function(file) {
   require(igraph)
   graph<-read.graph(file, format="gml")
+  layout <- layout.auto(graph)
+  V(graph)$x <- layout[,1]
+  V(graph)$y <- layout[,2]
   write.graph(graph, paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""), format="graphml")
   return(paste(strsplit(file, "\\.")[[1]][1], ".xml", sep=""))
 }
@@ -41,7 +44,7 @@ shinyServer(function(input, output) {
     supported_formats<-c("gml")
     if(tolower(strsplit(input$dataset, "\\.")[[1]][2]) %in% supported_formats) {
       #return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), layout=input$layout))
-      return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset))))
+      return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), index = 0))
     } else {
       return()  
     }
@@ -100,7 +103,7 @@ shinyServer(function(input, output) {
     }
     
     for(g in as.character(unique(empty$Group))) {
-      html<-paste(html,"<h3>Group ", g, "</h3><div><ul>", sep="")
+      html<-paste(html,"<h3>Group ", g, " (", nrow(subset(empty, as.character(Group) == g)), ")", "</h3><div><ul>", sep="")
       for(n in as.character(subset(empty, as.character(Group) == g)$Node)) {
         html<-paste(html,"<li>", n, "</li>", sep="")
       }
