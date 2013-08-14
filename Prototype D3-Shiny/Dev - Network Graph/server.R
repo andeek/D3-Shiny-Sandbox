@@ -37,16 +37,25 @@ shinyServer(function(input, output) {
   #})
   
   data <- reactive({
-    #if(is.null(input$dataset) | is.null(input$layout))
-    if(is.null(input$dataset))
-      return()
-    
+    #if(is.null(input$dataset) | is.null(input$layout))    
     supported_formats<-c("gml")
-    if(tolower(strsplit(input$dataset, "\\.")[[1]][2]) %in% supported_formats) {
-      #return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), layout=input$layout))
-      return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), index = 0))
+    
+    if(!input$upload) {
+      if(is.null(input$dataset)) return()
+      else if(tolower(strsplit(input$dataset, "\\.")[[1]][2]) %in% supported_formats) {
+        #return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), layout=input$layout))
+        return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), index = 0))
+      } else {
+        return()  
+      }
     } else {
-      return()  
+      if(is.null(input$dataset_up)) return()
+      else if(tolower(strsplit(input$dataset_up$name, "\\.")[[1]][2]) %in% supported_formats) {
+        #return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), layout=input$layout))
+        return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset_up$datapath)), index = 0))
+      } else {
+        return()  
+      }
     }
   })
   output$d3io <- reactive({ data() })
