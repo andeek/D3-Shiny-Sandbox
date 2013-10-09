@@ -5,7 +5,7 @@ dynGraph <- function(inputoutputId)
 
 shinyUI(pageWithSidebar(
   
-  headerPanel("Interactive Community Detection"),
+  headerPanel("gravicom: Graphical Visualization of Communities"),
   
   sidebarPanel(
     includeHTML("scripts/graph_2.js"),
