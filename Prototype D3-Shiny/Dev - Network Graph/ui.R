@@ -19,9 +19,10 @@ shinyUI(pageWithSidebar(
       condition = "input.upload == true",
       fileInput('dataset_up', 'Choose GML File',
                 accept="text/xml; subtype='gml/3.1.1'")
-    ),       
+    ),   
+    downloadButton('downloadData', 'Download current dataset'),
     #uiOutput("choose_layout"),
-    p("User Selection"),
+    p(HTML("<h4>User Selection</h4>")),
     tableOutput('d3summary'),
     helpText(HTML("All source available on <a href = \"https://github.com/andeek/Community-Detection/tree/master/Prototype%20D3-Shiny/Network%20Graph\" target=\"_blank\">Github</a>"))
   ),

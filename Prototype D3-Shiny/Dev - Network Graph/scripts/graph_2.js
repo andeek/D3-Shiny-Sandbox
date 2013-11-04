@@ -141,13 +141,13 @@ function wrapper(el, data) {
       .range([h,0]);
     
     //setup each nodes with count 1 and store "group" value to be changed later
-    root.nodes.forEach(function(d) { d.count = 1; d.group = d.id; d.index = d.v_id; d.x = scale_x(parseFloat(d.v_x)); d.y = scale_y(parseFloat(d.v_y)); d.selected=0;});
+    root.nodes.forEach(function(d) { 
+      d.count = 1; d.group = ((d.v_Group && d.v_Group != 'NA') ? d.v_Group : d.id); d.index = d.v_id; d.x = scale_x(parseFloat(d.v_x)); d.y = scale_y(parseFloat(d.v_y)); d.selected=0;});
     
     update();
   }
   
   function update() {
-    
     if(node && node.length > 0) { group(root); }
     dataset_condense = condense(root);
     
