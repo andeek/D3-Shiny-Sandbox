@@ -148,6 +148,7 @@ function wrapper(el, data) {
   }
   
   function update() {
+    
     if(node && node.length > 0) { group(root); }
     dataset_condense = condense(root);
     
@@ -356,8 +357,7 @@ function wrapper(el, data) {
         length:e.length
       };
     })
-    .entries(root_e);
-    
+    .entries(root_e);  
     
     edges_hier.forEach( function(e) {
       //e sources
@@ -368,7 +368,7 @@ function wrapper(el, data) {
         if(test == 0 && f.key != e.key) {
           var s = nodes.filter(function(v) { return v.id == e.key;}),
           t = nodes.filter(function(v) { return v.id == f.key;});
-          links.push({source: parseInt(s[0].index.toString()), target: parseInt(t[0].index.toString()), strength: f.values.length + e.values.length});
+          links.push({source: parseInt(s[0].index.toString()), target: parseInt(t[0].index.toString()), strength: f.values.length + e.values.length, strength2: f.values.length});
         }        
       })
     });

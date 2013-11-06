@@ -70,7 +70,7 @@ shinyServer(function(input, output) {
   })
   output$d3io <- reactive({ data() })
   
-  datasetInput <- reactive({
+  datasetInput <- reactive({    
     empty<-data.frame(Within=0, Outside=0, Proportion=NA, row.names="Connections")
     
     if(exists("input") && length(names(input)) > 0){
@@ -79,13 +79,15 @@ shinyServer(function(input, output) {
   
         if("selected" %in% names(nodes)) { 
           nodes_selected<-as.character(subset(nodes, selected == 1)$id)
-          edges<-ldply(input[[names(input)[names(input) == "d3io"]]]["links"][[1]], function(x) data.frame(c(x[["source"]][c("id", "selected")], x[["target"]][c("id", "selected")])))
-          names(edges) <- c("source.id", "source.selected", "target.id", "target.selected")
+          edges<-ldply(input[[names(input)[names(input) == "d3io"]]]["links"][[1]], function(x) data.frame(c(x[["source"]][c("id", "selected")], x[["target"]][c("id", "selected")], x["strength2"])))
+          names(edges) <- c("source.id", "source.selected", "target.id", "target.selected", "strength")
           if(nrow(edges) > 0) {
             edges_selected<-subset(edges, source.selected == 1 | target.selected == 1)
             within_selected<-subset(edges_selected, as.character(source.id) %in% nodes_selected & as.character(target.id) %in% nodes_selected)
-            n_total_selected<-nrow(edges_selected)
-            n_within_selected<-nrow(within_selected)
+            #n_total_selected<-nrow(edges_selected)
+            #n_within_selected<-nrow(within_selected)
+            n_total_selected<-sum(edges_selected$strength)
+            n_within_selected<-sum(within_selected$strength)
           } else {
             n_total_selected<-0
             n_within_selected<-0
