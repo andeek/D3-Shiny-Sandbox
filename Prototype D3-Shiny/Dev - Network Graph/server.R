@@ -71,7 +71,7 @@ shinyServer(function(input, output) {
   output$d3io <- reactive({ data() })
   
   datasetInput <- reactive({
-    empty<-data.frame(Within=0, Outside=0, row.names="Connections")
+    empty<-data.frame(Within=0, Outside=0, Proportion=NA, row.names="Connections")
     
     if(exists("input") && length(names(input)) > 0){
       if(names(input)[1] == "d3io") {
@@ -90,7 +90,8 @@ shinyServer(function(input, output) {
             n_total_selected<-0
             n_within_selected<-0
           }        
-          empty<-data.frame(Within=n_within_selected, Outside=n_total_selected - n_within_selected, row.names="Connections")
+          empty<-data.frame(Within=n_within_selected, Outside=n_total_selected - n_within_selected, Proportion=ifelse(n_total_selected - n_within_selected != 0, round(as.numeric(n_within_selected)/as.numeric(n_total_selected - n_within_selected), 4),NA), row.names="Connections")
+          
         }
       }
     }
@@ -171,7 +172,7 @@ shinyServer(function(input, output) {
   
   
   output$d3summary <- renderTable({dataset <- datasetInput()
-                                   print(dataset)}, digits=0)
+                                   print(dataset)}, digits=c(0,0,0,4))
   
   output$groupTable <- renderText({
     html<-"<div id='accordion'>"
