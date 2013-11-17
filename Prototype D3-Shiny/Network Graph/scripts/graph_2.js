@@ -42,6 +42,7 @@ circle.node.selected {
   })();
 
 </script>
+
 <script type="text/javascript">
   
 var dataset_condense;
@@ -140,7 +141,8 @@ function wrapper(el, data) {
       .range([h,0]);
     
     //setup each nodes with count 1 and store "group" value to be changed later
-    root.nodes.forEach(function(d) { d.count = 1; d.group = d.id; d.index = d.v_id; d.x = scale_x(parseFloat(d.v_x)); d.y = scale_y(parseFloat(d.v_y)); d.selected=0;});
+    root.nodes.forEach(function(d) { 
+      d.count = 1; d.group = ((d.v_Group && d.v_Group != 'NA') ? d.v_Group : d.id); d.index = d.v_id; d.x = scale_x(parseFloat(d.v_x)); d.y = scale_y(parseFloat(d.v_y)); d.selected=0;});
     
     update();
   }
@@ -355,8 +357,7 @@ function wrapper(el, data) {
         length:e.length
       };
     })
-    .entries(root_e);
-    
+    .entries(root_e);  
     
     edges_hier.forEach( function(e) {
       //e sources
@@ -367,7 +368,7 @@ function wrapper(el, data) {
         if(test == 0 && f.key != e.key) {
           var s = nodes.filter(function(v) { return v.id == e.key;}),
           t = nodes.filter(function(v) { return v.id == f.key;});
-          links.push({source: parseInt(s[0].index.toString()), target: parseInt(t[0].index.toString()), strength: f.values.length + e.values.length});
+          links.push({source: parseInt(s[0].index.toString()), target: parseInt(t[0].index.toString()), strength: f.values.length + e.values.length, strength2: f.values.length});
         }        
       })
     });
