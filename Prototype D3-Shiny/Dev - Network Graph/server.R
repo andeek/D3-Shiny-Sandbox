@@ -60,9 +60,15 @@ shinyServer(function(input, output) {
     } else {
       if(is.null(input$dataset_up)) return()
       else if(tolower(strsplit(input$dataset_up$name, "\\.")[[1]][2]) %in% supported_formats) {
-        #return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), layout=input$layout))
-        xml <- getXMLfromFile(input$dataset_up$datapath)
-        return(list(data_json=GraphMLtoJSON(xml$loc), index = xml$index))
+        tryCatch({
+          #return(list(data_json=GraphMLtoJSON(getXMLfromFile(input$dataset)), layout=input$layout))
+          xml <- getXMLfromFile(input$dataset_up$datapath)
+          return(list(data_json=GraphMLtoJSON(xml$loc), index = xml$index))
+        }, error = function(e) {
+          d <-  tempdir()
+          unlink(d, recursive=TRUE)
+          return()
+        })
       } else {
         return()  
       }
@@ -118,8 +124,12 @@ shinyServer(function(input, output) {
     } else {
       if(is.null(input$dataset_up)) return()
       else if(tolower(strsplit(input$dataset_up$name, "\\.")[[1]][2]) %in% supported_formats) {
-        graph<-read.graph(input$dataset_up$datapath, format="gml")
-        graph.df<-get.data.frame(graph, what="both")
+        tryCatch({
+          graph<-read.graph(input$dataset_up$datapath, format="gml")
+          graph.df<-get.data.frame(graph, what="both")
+        }, error = function(e) {
+          return()
+        })
       } 
     }  
     
