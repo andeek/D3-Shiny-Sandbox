@@ -1,4 +1,4 @@
-Community-Detection
+D3-Shiny Sandbox
 ===================
 
-Work on community detection in random graphs using interactive tools like shiny and D3.
+Repo documenting my trials/failures with learning D3 and shiny.

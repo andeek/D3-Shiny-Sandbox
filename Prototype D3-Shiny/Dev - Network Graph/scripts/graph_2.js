@@ -25,10 +25,6 @@ circle.node.selected {
   font-size: 2em;
 }
 </style>
-<script src="http://d3js.org/d3.v3.js"></script>
-<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
-<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -81,7 +77,7 @@ function wrapper(el, data) {
       root,
       node,
       link,
-      shiftkey,
+      shiftKey,
       color_scale = d3.scale.category20();;
  
   var force = d3.layout.force()
